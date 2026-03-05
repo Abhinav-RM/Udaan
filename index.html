@@ -15,67 +15,61 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;}
   position:fixed;top:0;left:0;width:100%;height:100%;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   z-index:10;pointer-events:none;
-  transition:opacity 1.2s ease;
+  transition:opacity 1.4s ease;
 }
 #overlay.hidden{opacity:0;pointer-events:none;}
 
 #hindiTitle{
   font-family:'Noto Sans Devanagari',serif;
   font-weight:900;
-  font-size:clamp(64px,12vw,130px);
-  color:rgba(60,110,255,0.85);
+  font-size:clamp(58px,11vw,125px);
+  color:rgba(55,105,255,0.85);
   letter-spacing:4px;
-  text-shadow:0 0 60px rgba(60,110,255,0.4),0 0 120px rgba(60,110,255,0.15);
-  animation:titlePulse 3s ease-in-out infinite;
-  margin-bottom:20px;
+  text-shadow:0 0 60px rgba(60,110,255,0.45),0 0 130px rgba(60,110,255,0.18);
+  animation:titlePulse 3.2s ease-in-out infinite;
+  margin-bottom:18px;
   pointer-events:none;
 }
-@keyframes titlePulse{0%,100%{opacity:0.75;text-shadow:0 0 40px rgba(60,110,255,0.4);}50%{opacity:1;text-shadow:0 0 80px rgba(80,140,255,0.7),0 0 140px rgba(60,110,255,0.3);}}
-
+@keyframes titlePulse{
+  0%,100%{opacity:0.7;text-shadow:0 0 40px rgba(60,110,255,0.4);}
+  50%{opacity:1;text-shadow:0 0 80px rgba(80,140,255,0.75),0 0 150px rgba(60,110,255,0.3);}
+}
 #punchline{
-  font-family:'Cormorant Garamond',serif;
-  font-weight:300;
-  font-style:italic;
-  font-size:clamp(12px,1.8vw,16px);
-  letter-spacing:5px;
-  color:rgba(255,255,255,0.3);
-  text-transform:uppercase;
-  margin-bottom:52px;
-  pointer-events:none;
+  font-family:'Cormorant Garamond',serif;font-weight:300;font-style:italic;
+  font-size:clamp(11px,1.7vw,15px);letter-spacing:6px;
+  color:rgba(255,255,255,0.28);text-transform:uppercase;
+  margin-bottom:54px;pointer-events:none;
 }
-
 #startBtn{
-  font-family:'Cormorant Garamond',serif;
-  font-weight:300;
-  font-size:15px;
-  letter-spacing:9px;
-  text-transform:uppercase;
-  color:rgba(255,255,255,0.7);
-  background:transparent;
-  border:1px solid rgba(80,130,255,0.45);
-  padding:14px 58px;
-  cursor:pointer;
-  pointer-events:all;
-  position:relative;
-  overflow:hidden;
-  transition:all 0.4s;
+  font-family:'Cormorant Garamond',serif;font-weight:300;font-size:14px;
+  letter-spacing:10px;text-transform:uppercase;
+  color:rgba(255,255,255,0.65);background:transparent;
+  border:1px solid rgba(75,125,255,0.4);padding:14px 62px;
+  cursor:pointer;pointer-events:all;position:relative;overflow:hidden;transition:all 0.4s;
 }
 #startBtn::before{
   content:'';position:absolute;inset:0;
-  background:linear-gradient(90deg,transparent,rgba(80,130,255,0.08),transparent);
-  transform:translateX(-100%);transition:transform 0.7s;
+  background:linear-gradient(90deg,transparent,rgba(80,130,255,0.09),transparent);
+  transform:translateX(-100%);transition:transform 0.75s;
 }
 #startBtn:hover::before{transform:translateX(100%);}
-#startBtn:hover{border-color:rgba(100,160,255,0.8);color:#fff;box-shadow:0 0 35px rgba(60,110,255,0.2);}
-#startBtn:disabled{opacity:0.35;cursor:not-allowed;}
+#startBtn:hover{border-color:rgba(100,160,255,0.85);color:#fff;box-shadow:0 0 40px rgba(60,110,255,0.22);}
+#startBtn:disabled{opacity:0.3;cursor:not-allowed;}
 
 #hint{
-  position:fixed;bottom:30px;left:50%;transform:translateX(-50%);
-  font-family:'Cormorant Garamond',serif;font-size:12px;letter-spacing:4px;
-  color:rgba(255,255,255,0.18);text-align:center;z-index:5;
-  white-space:nowrap;opacity:0;transition:opacity 1s;pointer-events:none;
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
+  font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:5px;
+  color:rgba(255,255,255,0.16);text-align:center;z-index:5;
+  white-space:nowrap;opacity:0;transition:opacity 1.2s;pointer-events:none;
 }
 #hint.show{opacity:1;}
+#stateLabel{
+  position:fixed;top:22px;left:50%;transform:translateX(-50%);
+  font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:5px;
+  color:rgba(255,255,255,0.12);text-align:center;z-index:5;
+  text-transform:uppercase;opacity:0;transition:opacity 0.8s;pointer-events:none;
+}
+#stateLabel.show{opacity:1;}
 </style>
 </head>
 <body>
@@ -87,21 +81,23 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;}
   <div id="punchline">pinch your fingers to reveal the magic</div>
   <button id="startBtn">START</button>
 </div>
-<div id="hint" id="hint">✦ &nbsp; PINCH TO ALIGN &nbsp; · &nbsp; OPEN PALM TO SCATTER &nbsp; ✦</div>
+<div id="hint">✦ &nbsp; PINCH TO ALIGN &nbsp;·&nbsp; OPEN PALM TO SCATTER &nbsp; ✦</div>
+<div id="stateLabel"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 <script>
 'use strict';
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// CORE SETUP
+// SETUP
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-const canvas  = document.getElementById('canvas');
-const ctx     = canvas.getContext('2d');
-const video   = document.getElementById('video');
-const overlay = document.getElementById('overlay');
-const startBtn= document.getElementById('startBtn');
-const hint    = document.getElementById('hint');
+const canvas   = document.getElementById('canvas');
+const ctx      = canvas.getContext('2d');
+const video    = document.getElementById('video');
+const overlay  = document.getElementById('overlay');
+const startBtn = document.getElementById('startBtn');
+const hint     = document.getElementById('hint');
+const stateLbl = document.getElementById('stateLabel');
 
 let W = canvas.width  = window.innerWidth;
 let H = canvas.height = window.innerHeight;
@@ -112,289 +108,337 @@ window.addEventListener('resize', () => {
 });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// STATE
+// GLOBAL STATE
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-let appState   = 'start';   // start | scattered | pinching | aligned | expanding
-let frame      = 0;
+let appState     = 'start';
+let frame        = 0;
 let FONT_SIZE, FONT;
-let wordMeta   = {};        // startX, baseY, totalW, firstCharW
-let pieces     = [];
-let particles  = [];
-let bookLetters= [];
-let showBook   = false;
-let bookPos    = {x:0,y:0};
-
-// Hand tracking state
-let handPresent   = false;
-let pinching      = false;
-let expanding     = false;
-let smoothPinch   = null;   // {x,y} smoothed pinch midpoint in screen coords
-let smoothPalm    = null;   // {x,y} smoothed palm in screen coords
-let expandTimer   = 0;      // frames since expand started
+let wordMeta     = {};
+let pieces       = [];
+let particles    = [];
+let shockwaves   = [];
+let bookLetters  = [];
+let showBook     = false;
+let bookFade     = 0;        // 0→1 fade-in for book+child
+let bookPos      = {x:0, y:0};
+let childPos     = {x:0, y:0};
+let alignFired   = false;
+let expandTimer  = 0;
+let smoothPinch  = null;
+let smoothPalm   = null;
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// AMBIENT LETTERS (start screen only)
+// DEVANAGARI ALPHABET
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-const DEVANAGARI = ['अ','आ','इ','ई','उ','ऊ','ए','ऐ','ओ','औ','क','ख','ग','घ','च','छ','ज','झ','ट','ठ','ड','ण','त','थ','द','न','प','फ','ब','म','य','र','ल','व','श','स','ह','ू','ी','ा','ं','ः','ृ'];
-let ambLetters = [];
+const DEV = ['अ','आ','इ','ई','उ','ऊ','ए','ऐ','ओ','औ',
+             'क','ख','ग','घ','च','छ','ज','झ','ट','ठ',
+             'ड','ण','त','थ','द','न','प','फ','ब','म',
+             'य','र','ल','व','श','स','ह','ू','ी','ा','ं','ृ'];
 
-class AmbLetter {
-  constructor(isSpawn) {
-    this.reset(isSpawn);
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// STAR DRAW HELPER
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function drawStar(c, x, y, spk, ro, ri) {
+  const step = Math.PI / spk; let r = -Math.PI / 2;
+  c.beginPath(); c.moveTo(x + Math.cos(r)*ro, y + Math.sin(r)*ro);
+  for (let i = 0; i < spk; i++) {
+    r += step; c.lineTo(x + Math.cos(r)*ri, y + Math.sin(r)*ri);
+    r += step; c.lineTo(x + Math.cos(r)*ro, y + Math.sin(r)*ro);
   }
-  reset(fromBottom = false) {
-    this.x = Math.random() * W;
-    this.y = fromBottom ? H + 40 : Math.random() * H;
-    this.char = DEVANAGARI[Math.floor(Math.random() * DEVANAGARI.length)];
-    this.sz = 16 + Math.random() * 42;
-    this.vy = -(0.35 + Math.random() * 1.1);
-    this.vx = (Math.random() - 0.5) * 0.4;
-    this.alpha = 0.05 + Math.random() * 0.28;
-    this.rot = (Math.random() - 0.5) * 0.5;
-    this.rv = (Math.random() - 0.5) * 0.003;
-    // Blue palette
-    const hue = 210 + Math.random() * 50;
-    const sat = 60 + Math.random() * 40;
-    const lit = 55 + Math.random() * 30;
-    this.color = `hsla(${hue},${sat}%,${lit}%,1)`;
+  c.closePath(); c.fill();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// AMBIENT LETTERS  (start screen canvas layer)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let ambLetters = [];
+class AmbLetter {
+  constructor(fromBottom) { this.reset(fromBottom); }
+  reset(fromBottom) {
+    this.x    = Math.random() * W;
+    this.y    = fromBottom ? H + 50 : Math.random() * H;
+    this.char = DEV[Math.floor(Math.random() * DEV.length)];
+    this.sz   = 14 + Math.random() * 46;
+    this.vy   = -(0.3 + Math.random() * 1.2);
+    this.vx   = (Math.random() - 0.5) * 0.5;
+    this.alpha= 0.04 + Math.random() * 0.26;
+    this.rot  = (Math.random() - 0.5) * 0.6;
+    this.rv   = (Math.random() - 0.5) * 0.004;
+    const h   = 210 + Math.random() * 55;
+    this.color= `hsla(${h},${65+Math.random()*35}%,${55+Math.random()*32}%,1)`;
   }
   update() {
-    this.x  += this.vx;
-    this.y  += this.vy;
-    this.rot+= this.rv;
-    if (this.y < -60) this.reset(true);
+    this.x += this.vx; this.y += this.vy; this.rot += this.rv;
+    if (this.y < -70) this.reset(true);
   }
   draw() {
     ctx.save();
     ctx.globalAlpha = this.alpha;
-    ctx.translate(this.x, this.y);
-    ctx.rotate(this.rot);
+    ctx.translate(this.x, this.y); ctx.rotate(this.rot);
     ctx.font = `bold ${this.sz}px 'Noto Sans Devanagari',serif`;
     ctx.fillStyle = this.color;
-    ctx.shadowColor = this.color;
-    ctx.shadowBlur = 18;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.shadowColor = this.color; ctx.shadowBlur = 20;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(this.char, 0, 0);
     ctx.restore();
   }
 }
-
-// Spawn initial pool
-for (let i = 0; i < 60; i++) ambLetters.push(new AmbLetter(false));
+for (let i = 0; i < 65; i++) ambLetters.push(new AmbLetter(false));
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// PARTICLE CLASS
+// PARTICLE  (burst + ambient sparkle)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Particle {
   constructor(x, y, burst) {
-    this.x  = x + (Math.random()-0.5) * (burst ? 120 : 30);
-    this.y  = y + (Math.random()-0.5) * 30;
-    this.star = Math.random() > 0.5;
-    const spd = burst ? (3 + Math.random()*10) : (0.5 + Math.random()*3);
+    this.x  = x + (Math.random()-0.5) * (burst ? 110 : 25);
+    this.y  = y + (Math.random()-0.5) * 25;
+    this.star = Math.random() > 0.48;
+    const spd = burst ? (2.5 + Math.random()*11) : (0.4 + Math.random()*2.5);
     const ang = Math.random() * Math.PI * 2;
-    this.vx = Math.cos(ang) * spd * (Math.random() + 0.3);
-    this.vy = Math.sin(ang) * spd - (burst ? 2 : 0.5);
-    this.sz   = this.star ? (3+Math.random()*8) : (1.5+Math.random()*3);
-    this.life = 1;
-    this.decay= this.star ? (0.007+Math.random()*0.01) : (0.02+Math.random()*0.025);
-    this.rot  = Math.random()*Math.PI*2;
-    this.rv   = (Math.random()-0.5)*0.08;
-    this.spikes=Math.random()>0.5?4:5;
+    this.vx  = Math.cos(ang) * spd * (0.4 + Math.random());
+    this.vy  = Math.sin(ang) * spd - (burst ? 2.5 : 0.5);
+    this.sz  = this.star ? (2.5+Math.random()*8) : (1.2+Math.random()*3);
+    this.life= 1;
+    this.decay = this.star ? (0.006+Math.random()*0.009) : (0.018+Math.random()*0.024);
+    this.rot = Math.random()*Math.PI*2;
+    this.rv  = (Math.random()-0.5)*0.09;
+    this.spk = Math.random()>0.5 ? 4 : 5;
   }
   update() {
-    this.x  += this.vx;
-    this.y  += this.vy;
-    this.vy += 0.06;
-    this.vx *= 0.98;
-    this.rot+= this.rv;
-    this.life-= this.decay;
+    this.x += this.vx; this.y += this.vy;
+    this.vy += 0.055; this.vx *= 0.982;
+    this.rot += this.rv; this.life -= this.decay;
   }
   draw() {
     if (this.life <= 0) return;
     ctx.save();
     ctx.globalAlpha = Math.max(0, this.life * 0.95);
     ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = 'rgba(210,225,255,0.9)';
-    ctx.shadowBlur = 12;
+    ctx.shadowColor = 'rgba(200,220,255,0.9)'; ctx.shadowBlur = 10;
     if (this.star) {
-      ctx.translate(this.x, this.y);
-      ctx.rotate(this.rot);
-      star(ctx, 0, 0, this.spikes, this.sz*this.life, this.sz*this.life*0.38);
+      ctx.translate(this.x, this.y); ctx.rotate(this.rot);
+      drawStar(ctx, 0, 0, this.spk, this.sz*this.life, this.sz*this.life*0.38);
     } else {
       ctx.beginPath();
-      ctx.arc(this.x, this.y, Math.max(0.5, this.sz*this.life), 0, Math.PI*2);
+      ctx.arc(this.x, this.y, Math.max(0.4, this.sz*this.life), 0, Math.PI*2);
       ctx.fill();
     }
     ctx.restore();
   }
 }
 
-function star(c,x,y,spk,ro,ri){
-  const step=Math.PI/spk; let r=-Math.PI/2;
-  c.beginPath(); c.moveTo(x+Math.cos(r)*ro,y+Math.sin(r)*ro);
-  for(let i=0;i<spk;i++){r+=step;c.lineTo(x+Math.cos(r)*ri,y+Math.sin(r)*ri);r+=step;c.lineTo(x+Math.cos(r)*ro,y+Math.sin(r)*ro);}
-  c.closePath();c.fill();
-}
-
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// BOOK LETTERS
+// SHOCKWAVE  (ripple on alignment) — MY ADDITION
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class BookLetter {
-  constructor(bx,by){
-    this.char=DEVANAGARI[Math.floor(Math.random()*DEVANAGARI.length)];
-    this.x=bx+(Math.random()-0.5)*60;
-    this.y=by;
-    this.vx=(Math.random()-0.5)*1.3;
-    this.vy=-(1.2+Math.random()*2.5);
-    this.sz=14+Math.random()*24;
-    this.life=1;
-    this.decay=0.005+Math.random()*0.005;
-    this.rot=(Math.random()-0.5)*0.4;
-    this.rv=(Math.random()-0.5)*0.012;
-  }
-  update(){
-    this.x+=this.vx; this.y+=this.vy;
-    this.vy-=0.01; this.rot+=this.rv; this.life-=this.decay;
-  }
-  draw(){
+class Shockwave {
+  constructor(x, y) { this.x=x; this.y=y; this.r=0; this.life=1; this.maxR=Math.max(W,H)*0.42; }
+  update() { this.r += 22; this.life = Math.max(0, 1 - this.r/this.maxR); }
+  draw() {
+    if (this.life <= 0) return;
     ctx.save();
-    ctx.globalAlpha=Math.max(0,this.life*0.95);
-    ctx.translate(this.x,this.y);ctx.rotate(this.rot);
-    ctx.font=`bold ${this.sz}px 'Noto Sans Devanagari',serif`;
-    ctx.fillStyle='#ffffff';
-    ctx.shadowColor='rgba(180,210,255,0.8)';ctx.shadowBlur=16;
-    ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText(this.char,0,0);
+    ctx.strokeStyle = `rgba(255,255,255,${this.life * 0.35})`;
+    ctx.lineWidth = 3 * this.life;
+    ctx.shadowColor = 'rgba(210,225,255,0.85)'; ctx.shadowBlur = 24;
+    ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI*2); ctx.stroke();
+    // Inner ring slightly behind
+    if (this.r > 30) {
+      ctx.strokeStyle = `rgba(255,255,255,${this.life * 0.18})`;
+      ctx.lineWidth = 1.5 * this.life;
+      ctx.beginPath(); ctx.arc(this.x, this.y, this.r*0.72, 0, Math.PI*2); ctx.stroke();
+    }
     ctx.restore();
   }
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// PIECE CLASS — spring physics telekinesis
+// BOOK LETTERS  (warm golden — from parchment pages)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+class BookLetter {
+  constructor(bx, by) {
+    this.char = DEV[Math.floor(Math.random() * DEV.length)];
+    this.x = bx + (Math.random()-0.5) * 55;
+    this.y = by;
+    this.vx = (Math.random()-0.5) * 1.1;
+    this.vy = -(1.0 + Math.random() * 2.2);
+    this.sz = 13 + Math.random() * 22;
+    this.life = 1;
+    this.decay = 0.004 + Math.random() * 0.005;
+    this.rot = (Math.random()-0.5) * 0.45;
+    this.rv  = (Math.random()-0.5) * 0.014;
+    // Warm golden palette — like ink from parchment
+    const t = Math.random();
+    this.color = t < 0.4
+      ? `hsla(38,${75+Math.random()*25}%,${65+Math.random()*20}%,1)`   // golden
+      : t < 0.75
+        ? `hsla(25,${70+Math.random()*20}%,${60+Math.random()*20}%,1)` // amber
+        : `hsla(50,${80+Math.random()*20}%,${80+Math.random()*15}%,1)`;// pale gold
+  }
+  update() {
+    this.x += this.vx; this.y += this.vy;
+    this.vy -= 0.012; this.rot += this.rv; this.life -= this.decay;
+  }
+  draw() {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, this.life * 0.95);
+    ctx.translate(this.x, this.y); ctx.rotate(this.rot);
+    ctx.font = `bold ${this.sz}px 'Noto Sans Devanagari',serif`;
+    ctx.fillStyle = this.color;
+    ctx.shadowColor = 'rgba(255,200,80,0.7)'; ctx.shadowBlur = 14;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(this.char, 0, 0);
+    ctx.restore();
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// MAGNETISM TRAIL  (during pinch assembly) — MY ADDITION
+// Small particles stream from each piece toward its target
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+class TrailDot {
+  constructor(x, y, tx, ty) {
+    this.x = x; this.y = y;
+    const dx = tx-x, dy = ty-y, d = Math.sqrt(dx*dx+dy*dy)||1;
+    const spd = 1.5 + Math.random()*2.5;
+    this.vx = (dx/d)*spd; this.vy = (dy/d)*spd;
+    this.life = 0.7 + Math.random()*0.3;
+    this.decay = 0.04 + Math.random()*0.04;
+    this.sz = 1.2 + Math.random()*2.2;
+  }
+  update() { this.x+=this.vx; this.y+=this.vy; this.vx*=0.96; this.vy*=0.96; this.life-=this.decay; }
+  draw() {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, this.life * 0.55);
+    ctx.fillStyle = '#cce0ff';
+    ctx.shadowColor = 'rgba(150,200,255,0.8)'; ctx.shadowBlur = 6;
+    ctx.beginPath(); ctx.arc(this.x, this.y, this.sz*this.life, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+}
+let trailDots = [];
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// PIECE CLASS  — spring physics, always assembles to CENTER
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Piece {
-  constructor(char, tx, ty, relX, relY) {
+  constructor(char, tx, ty) {
     this.char = char;
-    this.tx   = tx;    // absolute target x
-    this.ty   = ty;    // absolute target y
-    this.relX = relX;  // offset from word center when pinched
-    this.relY = relY;
-    this.x    = 0;
-    this.y    = 0;
-    this.vx   = 0;
-    this.vy   = 0;
-    this.angle= 0;
-    this.va   = 0;
-    this.scale= 1;
+    this.tx = tx; this.ty = ty;  // fixed screen-center targets
+    this.x = 0; this.y = 0;
+    this.vx = 0; this.vy = 0;
+    this.angle = 0; this.va = 0;
+    this.scale = 1;
     this.scatter();
   }
 
   scatter() {
-    const m = 100;
-    this.x  = m + Math.random()*(W-m*2);
-    this.y  = m + Math.random()*(H-m*2);
-    this.vx = (Math.random()-0.5)*2.5;
-    this.vy = (Math.random()-0.5)*2.5;
-    this.angle=(Math.random()-0.5)*1.6;
-    this.va  =(Math.random()-0.5)*0.012;
-    this.scale= 0.8+Math.random()*0.35;
+    const m = 110;
+    this.x  = m + Math.random() * (W - m*2);
+    this.y  = m + Math.random() * (H - m*2);
+    this.vx = (Math.random()-0.5) * 2.8;
+    this.vy = (Math.random()-0.5) * 2.8;
+    this.angle = (Math.random()-0.5) * 1.8;
+    this.va    = (Math.random()-0.5) * 0.014;
+    this.scale = 0.75 + Math.random() * 0.4;
   }
 
   explodeFrom(px, py) {
-    const dx=this.x-px, dy=this.y-py;
-    const d=Math.sqrt(dx*dx+dy*dy)||1;
-    const speed=14+Math.random()*18;
-    this.vx=(dx/d)*speed+(Math.random()-0.5)*8;
-    this.vy=(dy/d)*speed+(Math.random()-0.5)*8;
-    this.va=(Math.random()-0.5)*0.1;
-    this.angle=(Math.random()-0.5)*2.0;
+    // Snap to near-center first, then blast out
+    const cx = W/2 + (this.tx - wordMeta.wordCenterX);
+    const cy = H/2 + (this.ty - wordMeta.wordCenterY);
+    this.x = cx; this.y = cy;
+    const dx = cx - px, dy = cy - py;
+    const d = Math.sqrt(dx*dx + dy*dy) || 1;
+    const speed = 16 + Math.random() * 20;
+    this.vx = (dx/d) * speed + (Math.random()-0.5) * 9;
+    this.vy = (dy/d) * speed + (Math.random()-0.5) * 9;
+    this.va = (Math.random()-0.5) * 0.12;
+    this.angle = (Math.random()-0.5) * 2.2;
   }
 
   update() {
     if (appState === 'pinching') {
-      // Spring toward pinch point with piece's relative offset
-      // STRONG spring so it feels responsive and follows hand instantly
-      const gx = smoothPinch.x + this.relX;
-      const gy = smoothPinch.y + this.relY;
-      const dx = gx - this.x;
-      const dy = gy - this.y;
-      // Spring: F = k * dx, critically damped
-      const k = 0.30;
-      const damp = 0.68;
+      // ── SPRING TO ABSOLUTE CENTER TARGETS ──
+      // Pieces always fly to their fixed positions, hand just triggers it
+      const dx = this.tx - this.x;
+      const dy = this.ty - this.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      // Progressive spring: stronger when far, gentler when close
+      const k    = dist > 200 ? 0.32 : dist > 80 ? 0.26 : 0.20;
+      const damp = 0.70;
       this.vx = this.vx * damp + dx * k;
       this.vy = this.vy * damp + dy * k;
-      this.x += this.vx;
-      this.y += this.vy;
-      // Snap angle and scale
+      this.x += this.vx; this.y += this.vy;
       this.angle += (0 - this.angle) * 0.22;
-      this.scale += (1 - this.scale) * 0.18;
+      this.scale += (1 - this.scale) * 0.20;
+      // Magnetism trail
+      if (frame % 3 === 0 && dist > 20)
+        trailDots.push(new TrailDot(this.x, this.y, this.tx, this.ty));
 
     } else if (appState === 'aligned') {
-      // Snap exactly to target
-      this.x += (this.tx - this.x) * 0.25;
-      this.y += (this.ty - this.y) * 0.25;
-      this.angle *= 0.85;
-      this.scale += (1 - this.scale) * 0.2;
-      this.vx = 0; this.vy = 0;
+      // Hard lock to exact targets — stays until expand
+      this.x += (this.tx - this.x) * 0.30;
+      this.y += (this.ty - this.y) * 0.30;
+      this.angle *= 0.82;
+      this.scale += (1 - this.scale) * 0.25;
+      this.vx = 0; this.vy = 0; this.va = 0;
 
     } else if (appState === 'expanding') {
-      this.x += this.vx;
-      this.y += this.vy;
+      this.x += this.vx; this.y += this.vy;
       this.angle += this.va;
-      this.vx *= 0.93;
-      this.vy *= 0.93;
-      this.va *= 0.95;
-      this.bounceWalls();
+      // Progressive soft friction — fast decel early, gentle later
+      const spd = Math.sqrt(this.vx*this.vx + this.vy*this.vy);
+      const friction = spd > 8 ? 0.91 : spd > 4 ? 0.93 : 0.962;
+      this.vx *= friction; this.vy *= friction; this.va *= 0.955;
+      // Soft wall repulsion (no hard bounce)
+      const pad = 85, k = 0.09;
+      if (this.x < pad)   this.vx += (pad - this.x) * k;
+      if (this.x > W-pad) this.vx -= (this.x - (W-pad)) * k;
+      if (this.y < pad)   this.vy += (pad - this.y) * k;
+      if (this.y > H-pad) this.vy -= (this.y - (H-pad)) * k;
 
     } else {
-      // scattered — gentle organic drift
-      this.x += this.vx;
-      this.y += this.vy;
+      // 'scattered' — organic gentle drift
+      this.x += this.vx; this.y += this.vy;
       this.angle += this.va;
-      this.vx *= 0.994;
-      this.vy *= 0.994;
-      this.va *= 0.998;
-      if (Math.random() < 0.015) {
-        this.vx += (Math.random()-0.5)*0.6;
-        this.vy += (Math.random()-0.5)*0.6;
+      this.vx *= 0.9955; this.vy *= 0.9955; this.va *= 0.9970;
+      if (Math.random() < 0.012) {
+        this.vx += (Math.random()-0.5) * 0.7;
+        this.vy += (Math.random()-0.5) * 0.7;
       }
       this.wrapEdges();
     }
   }
 
-  bounceWalls() {
-    const pad=70;
-    if(this.x<pad){this.x=pad;this.vx=Math.abs(this.vx)*0.55;}
-    if(this.x>W-pad){this.x=W-pad;this.vx=-Math.abs(this.vx)*0.55;}
-    if(this.y<pad){this.y=pad;this.vy=Math.abs(this.vy)*0.55;}
-    if(this.y>H-pad){this.y=H-pad;this.vy=-Math.abs(this.vy)*0.55;}
-  }
-
   wrapEdges() {
-    const m=FONT_SIZE;
-    if(this.x<-m)this.x=W+m*0.5;
-    if(this.x>W+m)this.x=-m*0.5;
-    if(this.y<-m)this.y=H+m*0.5;
-    if(this.y>H+m)this.y=-m*0.5;
+    const m = FONT_SIZE;
+    if (this.x < -m) this.x = W + m*0.5;
+    if (this.x > W+m) this.x = -m*0.5;
+    if (this.y < -m) this.y = H + m*0.5;
+    if (this.y > H+m) this.y = -m*0.5;
   }
 
   isNearTarget() {
-    return Math.abs(this.x-this.tx)<16 && Math.abs(this.y-this.ty)<16 && Math.abs(this.angle)<0.08;
+    return Math.abs(this.x - this.tx) < 14 &&
+           Math.abs(this.y - this.ty) < 14 &&
+           Math.abs(this.angle) < 0.07;
   }
 
-  draw() {
+  draw(glowPulse) {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
     ctx.scale(this.scale, this.scale);
-    ctx.globalAlpha = 0.92;
+    ctx.globalAlpha = 0.93;
     ctx.font = FONT;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = 'rgba(210,225,255,0.5)';
-    ctx.shadowBlur = 22;
+    // Breathing glow when aligned — MY ADDITION
+    const glow = (appState === 'aligned') ? (18 + glowPulse * 28) : 20;
+    ctx.shadowColor = (appState === 'aligned')
+      ? `rgba(210,228,255,${0.45 + glowPulse * 0.3})`
+      : 'rgba(210,225,255,0.45)';
+    ctx.shadowBlur = glow;
     ctx.fillText(this.char, 0, 0);
     ctx.restore();
   }
@@ -404,71 +448,235 @@ class Piece {
 // INIT PIECES
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function initPieces() {
-  FONT_SIZE = Math.min(W/4.2, H/3.2, 165);
+  FONT_SIZE = Math.min(W/4.0, H/3.1, 168);
   FONT = `900 ${FONT_SIZE}px 'Noto Sans Devanagari',serif`;
   ctx.font = FONT;
   ctx.textBaseline = 'alphabetic';
 
-  const chars  = ['उ','ड़ा','न'];
+  const chars  = ['उ', 'ड़ा', 'न'];
   const widths = chars.map(c => ctx.measureText(c).width);
-  const totalW = widths.reduce((a,b)=>a+b,0);
-  const gap    = FONT_SIZE * 0.0; // no extra gap — natural spacing
+  const totalW = widths.reduce((a,b) => a+b, 0);
 
   const startX = (W - totalW) / 2;
   const baseY  = H * 0.52 + FONT_SIZE * 0.28;
 
-  // Compute absolute targets + center
   let cx = startX;
   const targets = chars.map((c,i) => { const tx=cx; cx+=widths[i]; return {x:tx,y:baseY}; });
-  const wordCenterX = startX + totalW/2;
-  const wordCenterY = baseY  - FONT_SIZE*0.35;
+
+  const wordCenterX = startX + totalW / 2;
+  const wordCenterY = baseY  - FONT_SIZE * 0.35;
 
   wordMeta = { startX, baseY, totalW, firstCharW: widths[0], wordCenterX, wordCenterY };
 
-  pieces = chars.map((c,i) => new Piece(
-    c,
-    targets[i].x,
-    targets[i].y,
-    targets[i].x - wordCenterX,
-    targets[i].y - wordCenterY
-  ));
+  // Book above first letter; child sits ON the letter top
+  bookPos  = { x: startX + widths[0]*0.5, y: baseY - FONT_SIZE*1.12 };
+  childPos = { x: startX + widths[0]*0.48, y: baseY - FONT_SIZE*0.82 };
+
+  pieces = chars.map((c,i) => new Piece(c, targets[i].x, targets[i].y));
+  alignFired = false;
+  trailDots  = [];
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// DRAW BOOK
+// DRAW BOOK  — realistic open hardcover book
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function drawBook(x, y) {
-  const bw=68, bh=44;
+function drawBook(x, y, t) {
+  if (t <= 0) return;
+  const sc = FONT_SIZE / 148;
+  const bw = 62*sc, bh = 42*sc;
+
   ctx.save();
+  ctx.globalAlpha = t;
   ctx.translate(x, y);
-  ctx.shadowColor='rgba(220,230,255,0.6)';
-  ctx.shadowBlur=28;
-  ctx.fillStyle='rgba(242,245,255,0.97)';
-  // Left page
+
+  // ── Outer glow ──
+  ctx.shadowColor = 'rgba(200,160,80,0.55)';
+  ctx.shadowBlur  = 22 * sc;
+
+  // ── Cover edges visible at far left/right ──
+  const coverColor  = '#5c2e0a';
+  const pageColor   = '#fdf3d8';
+  const pageColor2  = '#f5e8c0';
+
+  // Left cover (dark leather)
+  ctx.fillStyle = coverColor;
   ctx.beginPath();
-  ctx.moveTo(0,2);
-  ctx.bezierCurveTo(-bw*0.35,-2,-bw*0.75,-7,-bw,-9);
-  ctx.lineTo(-bw,bh-5);
-  ctx.bezierCurveTo(-bw*0.75,bh,-bw*0.35,bh+2,0,bh+3);
+  ctx.moveTo(-bw-4*sc, -10*sc);
+  ctx.bezierCurveTo(-bw-4*sc, -12*sc, -bw+2*sc, -10*sc, -2*sc, 2*sc);
+  ctx.lineTo(-2*sc, bh+3*sc);
+  ctx.bezierCurveTo(-bw+2*sc, bh+2*sc, -bw-4*sc, bh+1*sc, -bw-4*sc, bh-4*sc);
   ctx.closePath(); ctx.fill();
-  // Right page
+
+  // Right cover
   ctx.beginPath();
-  ctx.moveTo(0,2);
-  ctx.bezierCurveTo(bw*0.35,-2,bw*0.75,-7,bw,-9);
-  ctx.lineTo(bw,bh-5);
-  ctx.bezierCurveTo(bw*0.75,bh,bw*0.35,bh+2,0,bh+3);
+  ctx.moveTo(bw+4*sc, -10*sc);
+  ctx.bezierCurveTo(bw+4*sc, -12*sc, bw-2*sc, -10*sc, 2*sc, 2*sc);
+  ctx.lineTo(2*sc, bh+3*sc);
+  ctx.bezierCurveTo(bw-2*sc, bh+2*sc, bw+4*sc, bh+1*sc, bw+4*sc, bh-4*sc);
   ctx.closePath(); ctx.fill();
-  ctx.shadowBlur=0;
-  ctx.strokeStyle='rgba(90,115,200,0.5)';ctx.lineWidth=2.2;
-  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,bh+2);ctx.stroke();
-  ctx.strokeStyle='rgba(120,145,220,0.22)';ctx.lineWidth=0.9;
-  for(let i=1;i<=3;i++){
-    const ly=i*bh/4.3;
-    ctx.beginPath();ctx.moveTo(-5,ly);ctx.bezierCurveTo(-bw*0.45,ly-1,-bw*0.8,ly-2,-bw+8,ly-2.5);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(5,ly);ctx.bezierCurveTo(bw*0.45,ly-1,bw*0.8,ly-2,bw-8,ly-2.5);ctx.stroke();
+
+  ctx.shadowBlur = 0;
+
+  // ── Left page (parchment) ──
+  ctx.fillStyle = pageColor;
+  ctx.beginPath();
+  ctx.moveTo(-1*sc, 2*sc);
+  ctx.bezierCurveTo(-bw*0.32, -1*sc, -bw*0.72, -6*sc, -bw, -8*sc);
+  ctx.lineTo(-bw, bh-4*sc);
+  ctx.bezierCurveTo(-bw*0.72, bh-1*sc, -bw*0.32, bh+1*sc, -1*sc, bh+2*sc);
+  ctx.closePath(); ctx.fill();
+
+  // ── Right page ──
+  ctx.fillStyle = pageColor2;
+  ctx.beginPath();
+  ctx.moveTo(1*sc, 2*sc);
+  ctx.bezierCurveTo(bw*0.32, -1*sc, bw*0.72, -6*sc, bw, -8*sc);
+  ctx.lineTo(bw, bh-4*sc);
+  ctx.bezierCurveTo(bw*0.72, bh-1*sc, bw*0.32, bh+1*sc, 1*sc, bh+2*sc);
+  ctx.closePath(); ctx.fill();
+
+  // ── Page lines (ink lines) ──
+  ctx.strokeStyle = 'rgba(100,65,25,0.25)'; ctx.lineWidth = 0.9*sc;
+  for (let i = 1; i <= 4; i++) {
+    const ly = i * bh / 5.2;
+    ctx.beginPath();
+    ctx.moveTo(-4*sc, ly); ctx.bezierCurveTo(-bw*0.42,ly-1*sc,-bw*0.78,ly-2*sc,-bw+7*sc,ly-2.5*sc);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(4*sc, ly); ctx.bezierCurveTo(bw*0.42,ly-1*sc,bw*0.78,ly-2*sc,bw-7*sc,ly-2.5*sc);
+    ctx.stroke();
   }
-  ctx.strokeStyle='rgba(90,115,200,0.28)';ctx.lineWidth=1.4;
-  ctx.beginPath();ctx.arc(0,1,10,Math.PI,0,false);ctx.stroke();
+
+  // ── Small golden Devanagari on left page ──
+  ctx.font = `bold ${9*sc}px 'Noto Sans Devanagari',serif`;
+  ctx.fillStyle = 'rgba(140,90,30,0.55)';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ['उड़','ान','पढ़ो'].forEach((txt,i) => {
+    ctx.fillText(txt, -bw*0.85, (i+1)*bh/4.8);
+  });
+
+  // ── Spine ──
+  ctx.strokeStyle = '#3d1a06'; ctx.lineWidth = 3*sc;
+  ctx.beginPath(); ctx.moveTo(0, -1*sc); ctx.lineTo(0, bh+2*sc); ctx.stroke();
+
+  // ── Top page edge shadow ──
+  ctx.strokeStyle = 'rgba(120,80,30,0.4)'; ctx.lineWidth = 1*sc;
+  ctx.beginPath(); ctx.arc(0, 1*sc, 9*sc, Math.PI, 0, false); ctx.stroke();
+
+  ctx.restore();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// DRAW READING CHILD  — sits on top of 'उ' letter
+// Small student figure cross-legged, looking up at book
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function drawChild(cx, cy, t) {
+  if (t <= 0) return;
+  const s = FONT_SIZE * 0.065; // unit scaled to font
+
+  ctx.save();
+  ctx.globalAlpha = t;
+  ctx.translate(cx, cy);
+
+  const skin  = '#f4c18a';
+  const cloth = '#3a6fc4'; // blue kurta
+  const cloth2= '#2a5aaa'; // darker folds
+  const hair  = '#1a0c06';
+
+  ctx.shadowColor = 'rgba(0,0,0,0.35)';
+  ctx.shadowBlur  = 4 * s;
+
+  // ── Cross-legged base (dhoti/lap area) ──
+  ctx.fillStyle = cloth2;
+  ctx.beginPath();
+  ctx.ellipse(0, s*0.05, s*1.35, s*0.48, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Left leg curve
+  ctx.fillStyle = cloth;
+  ctx.beginPath();
+  ctx.ellipse(-s*0.78, s*0.3, s*0.52, s*0.30, -0.35, 0, Math.PI*2);
+  ctx.fill();
+
+  // Right leg curve
+  ctx.beginPath();
+  ctx.ellipse(s*0.72, s*0.32, s*0.52, s*0.28, 0.35, 0, Math.PI*2);
+  ctx.fill();
+
+  // Feet peeking out
+  ctx.fillStyle = skin;
+  ctx.beginPath(); ctx.ellipse(-s*1.12, s*0.52, s*0.26, s*0.15, -0.25, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(s*1.05, s*0.55, s*0.26, s*0.15, 0.25, 0, Math.PI*2); ctx.fill();
+
+  // ── Torso (leaning slightly back/up to look at book above) ──
+  ctx.fillStyle = cloth;
+  ctx.save();
+  ctx.rotate(-0.12);
+  ctx.beginPath();
+  ctx.moveTo(-s*0.52, s*0.05);
+  ctx.bezierCurveTo(-s*0.58, -s*0.5, -s*0.5, -s*1.05, -s*0.32, -s*1.3);
+  ctx.bezierCurveTo(-s*0.0, -s*1.42, s*0.32, -s*1.3, s*0.32, -s*1.05);
+  ctx.bezierCurveTo(s*0.5, -s*0.5, s*0.55, s*0.05, s*0.52, s*0.05);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+
+  // ── Arms reaching up toward book ──
+  ctx.strokeStyle = cloth;
+  ctx.lineWidth = s * 0.55;
+  ctx.lineCap = 'round';
+  // Left arm up
+  ctx.beginPath();
+  ctx.moveTo(-s*0.38, -s*0.7);
+  ctx.quadraticCurveTo(-s*0.7, -s*1.4, -s*0.55, -s*2.1);
+  ctx.stroke();
+  // Right arm up
+  ctx.beginPath();
+  ctx.moveTo(s*0.28, -s*0.7);
+  ctx.quadraticCurveTo(s*0.62, -s*1.4, s*0.45, -s*2.05);
+  ctx.stroke();
+
+  // ── Hands (small circles) ──
+  ctx.fillStyle = skin;
+  ctx.beginPath(); ctx.arc(-s*0.55, -s*2.08, s*0.25, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(s*0.45,  -s*2.03, s*0.25, 0, Math.PI*2); ctx.fill();
+
+  ctx.shadowBlur = 0;
+
+  // ── Head (looking up — slightly tilted back) ──
+  ctx.fillStyle = skin;
+  ctx.beginPath();
+  ctx.arc(s*0.04, -s*1.78, s*0.55, 0, Math.PI*2);
+  ctx.fill();
+
+  // ── Hair ──
+  ctx.fillStyle = hair;
+  ctx.beginPath();
+  ctx.arc(s*0.04, -s*1.93, s*0.56, Math.PI*0.72, Math.PI*2.28);
+  ctx.fill();
+  // Hair tufts
+  ctx.beginPath(); ctx.arc(-s*0.28, -s*2.12, s*0.24, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(s*0.36,  -s*2.14, s*0.22, 0, Math.PI*2); ctx.fill();
+
+  // ── Eyes (looking UP at the book, white part first) ──
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath(); ctx.ellipse(-s*0.15, -s*1.71, s*0.15, s*0.12, -0.2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(s*0.23,  -s*1.72, s*0.15, s*0.12, 0.2, 0, Math.PI*2); ctx.fill();
+  // Irises
+  ctx.fillStyle = '#4a2800';
+  ctx.beginPath(); ctx.arc(-s*0.13, -s*1.74, s*0.09, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(s*0.25,  -s*1.75, s*0.09, 0, Math.PI*2); ctx.fill();
+
+  // ── Smile ──
+  ctx.strokeStyle = 'rgba(140,80,30,0.6)'; ctx.lineWidth = s*0.12;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(s*0.04, -s*1.62, s*0.18, 0.2, Math.PI-0.2);
+  ctx.stroke();
+
+  // ── Small bindi / tilak ──
+  ctx.fillStyle = 'rgba(200,60,60,0.75)';
+  ctx.beginPath(); ctx.arc(s*0.04, -s*1.87, s*0.06, 0, Math.PI*2); ctx.fill();
+
   ctx.restore();
 }
 
@@ -476,208 +684,225 @@ function drawBook(x, y) {
 // BURST HELPERS
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function burstAt(x, y, n) {
-  for(let i=0;i<n;i++) particles.push(new Particle(x,y,true));
+  for (let i = 0; i < n; i++) particles.push(new Particle(x, y, true));
 }
 function ambientSparkle() {
-  if(frame%4===0) {
-    const px = wordMeta.startX + Math.random()*wordMeta.totalW;
-    const py = wordMeta.baseY - Math.random()*FONT_SIZE;
-    particles.push(new Particle(px,py,false));
+  if (frame % 5 === 0) {
+    const px = wordMeta.startX + Math.random() * wordMeta.totalW;
+    const py = wordMeta.baseY - Math.random() * FONT_SIZE;
+    particles.push(new Particle(px, py, false));
   }
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // RENDER LOOP
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-let alignFired = false;
-
 function render() {
   requestAnimationFrame(render);
   frame++;
 
-  ctx.fillStyle='#000';
-  ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
 
-  // ── START SCREEN canvas layer ──
+  // ── START SCREEN ──
   if (appState === 'start') {
-    ambLetters.forEach(l=>{l.update();l.draw();});
-    // Spawn one per frame up to cap
-    if(ambLetters.length < 65 && frame%4===0) ambLetters.push(new AmbLetter(true));
+    ambLetters.forEach(l => { l.update(); l.draw(); });
+    if (ambLetters.length < 68 && frame % 5 === 0) ambLetters.push(new AmbLetter(true));
     return;
   }
 
-  // ── MAIN EXPERIENCE ──
-  pieces.forEach(p=>p.update());
-  pieces.forEach(p=>p.draw());
+  // ── Breathing glow pulse value ──  (MY ADDITION)
+  const glowPulse = (Math.sin(frame * 0.045) * 0.5 + 0.5);
 
-  // Alignment detection: all pieces near absolute target while pinching
-  if(appState==='pinching' && !alignFired && pieces.every(p=>p.isNearTarget())){
+  // ── Shockwaves ──
+  shockwaves = shockwaves.filter(s => s.life > 0);
+  shockwaves.forEach(s => { s.update(); s.draw(); });
+
+  // ── Trail dots (during pinch) ──
+  trailDots = trailDots.filter(d => d.life > 0);
+  trailDots.forEach(d => { d.update(); d.draw(); });
+
+  // ── Pieces ──
+  pieces.forEach(p => p.update());
+  pieces.forEach(p => p.draw(glowPulse));
+
+  // ── Alignment detection ──
+  if (appState === 'pinching' && !alignFired && pieces.every(p => p.isNearTarget())) {
     alignFired = true;
     appState   = 'aligned';
     showBook   = true;
-    bookPos    = {
-      x: wordMeta.startX + wordMeta.firstCharW*0.5,
-      y: wordMeta.baseY  - FONT_SIZE*1.08
-    };
-    // Big burst across whole word
-    for(let i=0;i<5;i++){
-      burstAt(wordMeta.startX + (i/4)*wordMeta.totalW, wordMeta.baseY - FONT_SIZE*0.4, 22);
-    }
+    bookFade   = 0;
+    trailDots  = [];
+    // Shockwave from center
+    shockwaves.push(new Shockwave(wordMeta.wordCenterX, wordMeta.wordCenterY));
+    shockwaves.push(new Shockwave(wordMeta.wordCenterX, wordMeta.wordCenterY)); // double ring
+    // Burst particles across word
+    for (let i = 0; i <= 5; i++)
+      burstAt(wordMeta.startX + (i/5)*wordMeta.totalW, wordMeta.baseY - FONT_SIZE*0.45, 20);
+    setStatus('✦ ALIGNED ✦');
   }
 
-  // Aligned effects
-  if(appState==='aligned'){
+  // ── Aligned state: book + child ──
+  if (appState === 'aligned') {
     ambientSparkle();
-    if(showBook){
-      if(frame%22===0) bookLetters.push(new BookLetter(bookPos.x, bookPos.y-8));
-      bookLetters=bookLetters.filter(l=>l.life>0);
-      bookLetters.forEach(l=>{l.update();l.draw();});
-      drawBook(bookPos.x, bookPos.y);
+    // Smooth fade-in for book and child (MY ADDITION)
+    bookFade = Math.min(1, bookFade + 0.018);
+    const bScale = bookFade < 0.5 ? (bookFade*2) : 1; // scale up on appear
+
+    if (showBook) {
+      if (frame % 24 === 0 && bookFade > 0.5)
+        bookLetters.push(new BookLetter(bookPos.x, bookPos.y - 5));
+      bookLetters = bookLetters.filter(l => l.life > 0);
+      bookLetters.forEach(l => { l.update(); l.draw(); });
+
+      ctx.save();
+      ctx.translate(bookPos.x, bookPos.y);
+      ctx.scale(bScale, bScale);
+      ctx.translate(-bookPos.x, -bookPos.y);
+      drawBook(bookPos.x, bookPos.y, bookFade);
+      ctx.restore();
+
+      // Child with same fade
+      drawChild(childPos.x, childPos.y, bookFade);
     }
   }
 
-  // Expanding → scattered transition
-  if(appState==='expanding'){
+  // ── Expanding → scattered transition ──
+  if (appState === 'expanding') {
     expandTimer++;
-    if(expandTimer > 55 && Math.max(...pieces.map(p=>Math.abs(p.vx)+Math.abs(p.vy))) < 3) {
+    const maxSpd = Math.max(...pieces.map(p => Math.sqrt(p.vx*p.vx+p.vy*p.vy)));
+    if (expandTimer > 60 && maxSpd < 2.5) {
       appState = 'scattered';
+      setStatus('✦ SCATTER ✦');
+      setTimeout(() => setStatus(''), 1500);
     }
   }
 
-  // Particles
-  particles=particles.filter(p=>p.life>0);
-  particles.forEach(p=>{p.update();p.draw();});
+  // ── Particles ──
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => { p.update(); p.draw(); });
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// HAND RESULTS — MediaPipe callback
+// STATUS LABEL HELPER
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function setStatus(txt) {
+  stateLbl.textContent = txt;
+  stateLbl.classList.add('show');
+  if (!txt) stateLbl.classList.remove('show');
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// HAND RESULTS  — MediaPipe callback
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function onHands(res) {
-  if(!res.multiHandLandmarks || res.multiHandLandmarks.length===0){
-    handPresent=false;
-    pinching=false;
-    expanding=false;
+  if (!res.multiHandLandmarks || res.multiHandLandmarks.length === 0) {
+    // Hand lost — if aligned, STAY aligned (don't scatter on hand loss)
+    if (appState === 'pinching') { appState = 'scattered'; trailDots = []; }
     return;
   }
-  handPresent=true;
-  const lm=res.multiHandLandmarks[0];
 
-  // ── Mirrored screen coords (selfie) ──
-  const toScreen=(l)=>({ x:(1-l.x)*W, y:l.y*H });
+  const lm = res.multiHandLandmarks[0];
+  const toS = l => ({ x: (1 - l.x) * W, y: l.y * H }); // mirror for selfie
 
-  const thumbTip=toScreen(lm[4]);
-  const idxTip  =toScreen(lm[8]);
-  const midTip  =toScreen(lm[12]);
-  const ringTip =toScreen(lm[16]);
-  const pinkyTip=toScreen(lm[20]);
-  const palmBase=toScreen(lm[0]);
-  const palmMid =toScreen(lm[9]);
+  const thumbTip = toS(lm[4]);
+  const idxTip   = toS(lm[8]);
+  const palmMid  = toS(lm[9]);
 
-  // Pinch distance (normalized, not screen)
-  const pinchDist=Math.hypot(lm[4].x-lm[8].x, lm[4].y-lm[8].y);
+  // ── Pinch: normalized distance ──
+  const pinchDist = Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y);
 
-  // Spread: avg fingertip to palm-mid distance (normalized)
-  const tips=[lm[4],lm[8],lm[12],lm[16],lm[20]];
-  const spread=tips.reduce((s,t)=>s+Math.hypot(t.x-lm[9].x,t.y-lm[9].y),0)/5;
+  // ── Spread: avg of all fingertips to palm mid ──
+  const tips   = [lm[4], lm[8], lm[12], lm[16], lm[20]];
+  const spread = tips.reduce((s,t) => s + Math.hypot(t.x-lm[9].x, t.y-lm[9].y), 0) / 5;
 
-  const isPinch = pinchDist < 0.065;
-  const isSpread= spread > 0.24 && pinchDist > 0.13;
+  const isPinch  = pinchDist < 0.068;
+  const isExpand = spread > 0.235 && pinchDist > 0.12 && lm[8].y < lm[5].y; // fingers up
 
-  // Smooth pinch midpoint — high responsiveness
-  const rawPinch = {
-    x:(thumbTip.x+idxTip.x)/2,
-    y:(thumbTip.y+idxTip.y)/2
-  };
-  if(!smoothPinch) smoothPinch={...rawPinch};
-  const LERP=0.7; // 0.7 = very responsive (70% new each frame)
-  smoothPinch.x=smoothPinch.x*(1-LERP)+rawPinch.x*LERP;
-  smoothPinch.y=smoothPinch.y*(1-LERP)+rawPinch.y*LERP;
+  // ── Smooth pinch midpoint (high responsiveness = 75% new) ──
+  const rawPinch = { x: (thumbTip.x+idxTip.x)/2, y: (thumbTip.y+idxTip.y)/2 };
+  if (!smoothPinch) smoothPinch = {...rawPinch};
+  smoothPinch.x = smoothPinch.x * 0.25 + rawPinch.x * 0.75;
+  smoothPinch.y = smoothPinch.y * 0.25 + rawPinch.y * 0.75;
 
-  if(!smoothPalm) smoothPalm={...palmMid};
-  smoothPalm.x=smoothPalm.x*0.5+palmMid.x*0.5;
-  smoothPalm.y=smoothPalm.y*0.5+palmMid.y*0.5;
+  if (!smoothPalm) smoothPalm = {...palmMid};
+  smoothPalm.x = smoothPalm.x * 0.4 + palmMid.x * 0.6;
+  smoothPalm.y = smoothPalm.y * 0.4 + palmMid.y * 0.6;
 
-  // ── STATE TRANSITIONS ──
-  if(isPinch){
-    pinching=true; expanding=false;
-    if(appState==='scattered') appState='pinching';
-    if(appState==='expanding'){ appState='pinching'; alignFired=false; }
+  // ── STATE MACHINE ──
+  if (isPinch) {
+    if (appState === 'scattered')  { appState = 'pinching'; setStatus('✦ DRAWING IN ✦'); }
+    if (appState === 'expanding')  { appState = 'pinching'; alignFired = false; trailDots = []; setStatus('✦ DRAWING IN ✦'); }
 
-  } else if(isSpread){
-    expanding=true; pinching=false;
-    if(appState==='aligned'){
-      appState='expanding';
-      expandTimer=0;
-      showBook=false;
-      bookLetters=[];
-      particles=[];
-      alignFired=false;
-      // Explode from palm center
-      pieces.forEach(p=>p.explodeFrom(smoothPalm.x,smoothPalm.y));
-    } else if(appState==='pinching'){
-      appState='expanding';
-      expandTimer=0;
-      alignFired=false;
-      pieces.forEach(p=>p.explodeFrom(smoothPalm.x,smoothPalm.y));
+  } else if (isExpand) {
+    if (appState === 'aligned') {
+      appState = 'expanding'; expandTimer = 0;
+      showBook = false; bookLetters = []; particles = [];
+      alignFired = false; trailDots = [];
+      pieces.forEach(p => p.explodeFrom(smoothPalm.x, smoothPalm.y));
+      setStatus('✦ EXPANDING ✦');
+
+    } else if (appState === 'pinching') {
+      appState = 'expanding'; expandTimer = 0; alignFired = false; trailDots = [];
+      pieces.forEach(p => p.explodeFrom(smoothPalm.x, smoothPalm.y));
+      setStatus('✦ EXPANDING ✦');
     }
 
   } else {
-    // Neutral gesture
-    pinching=false; expanding=false;
-    if(appState==='pinching') appState='scattered';
+    // Neutral — only stop pinching state, never break aligned
+    if (appState === 'pinching') { appState = 'scattered'; trailDots = []; setStatus(''); }
   }
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // START BUTTON
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-startBtn.addEventListener('click', async()=>{
-  startBtn.textContent='LOADING…';
-  startBtn.disabled=true;
+startBtn.addEventListener('click', async () => {
+  startBtn.textContent = 'LOADING…';
+  startBtn.disabled = true;
 
   try {
-    const stream=await navigator.mediaDevices.getUserMedia({
-      video:{facingMode:'user',width:{ideal:640},height:{ideal:480}}
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: {ideal:640}, height: {ideal:480} }
     });
-    video.srcObject=stream;
-    await new Promise(res=>{ video.onloadedmetadata=res; });
+    video.srcObject = stream;
+    await new Promise(res => { video.onloadedmetadata = res; });
 
-    // Fade overlay
     overlay.classList.add('hidden');
-    setTimeout(()=>{ overlay.style.display='none'; },1200);
+    setTimeout(() => { overlay.style.display = 'none'; }, 1400);
 
     await document.fonts.ready;
     initPieces();
-    appState='scattered';
+    appState = 'scattered';
     hint.classList.add('show');
+    stateLbl.classList.add('show');
 
-    // Boot MediaPipe
-    const hands=new Hands({
-      locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
+    const hands = new Hands({
+      locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
     });
     hands.setOptions({
-      maxNumHands:1,
-      modelComplexity:1,
-      minDetectionConfidence:0.7,
-      minTrackingConfidence:0.6
+      maxNumHands: 1,
+      modelComplexity: 1,
+      minDetectionConfidence: 0.7,
+      minTrackingConfidence: 0.62
     });
     hands.onResults(onHands);
 
-    const cam=new Camera(video,{
-      onFrame:async()=>{ await hands.send({image:video}); },
-      width:640, height:480
+    const cam = new Camera(video, {
+      onFrame: async () => { await hands.send({ image: video }); },
+      width: 640, height: 480
     });
     await cam.start();
 
-  } catch(err){
-    startBtn.textContent='START';
-    startBtn.disabled=false;
-    alert('🎥 Camera access is required.\nPlease allow camera permissions and try again.');
+  } catch (err) {
+    startBtn.textContent = 'START';
+    startBtn.disabled = false;
+    alert('🎥 Camera access required.\nPlease allow camera permissions and try again.');
     console.error(err);
   }
 });
 
-// ── Kick off ──
+// Kick off
 requestAnimationFrame(render);
 </script>
 </body>
