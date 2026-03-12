@@ -1,541 +1,886 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Udaan Cinematic Reveal</title>
-    
-    <!-- Load MediaPipe Hands Directly -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
-    
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background: #050505;
-            overflow: hidden;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            touch-action: none;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Sorcerer's Sandbox</title>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js" crossorigin="anonymous"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%;
+      background: #000;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      touch-action: none;
+    }
 
-        #start-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.9);
-            backdrop-filter: blur(8px);
-            z-index: 10;
-            color: white;
-            text-align: center;
-        }
+    /* ── Start Overlay ── */
+    #start-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      z-index: 20;
+    }
 
-        .title {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-            text-shadow: 0 0 10px rgba(255,255,255,0.5);
-            letter-spacing: 2px;
-        }
+    /* Spellbook parchment */
+    .spellbook {
+      position: relative;
+      width: min(520px, 94vw);
+      background: radial-gradient(ellipse at center, #1a0e00 0%, #0a0600 100%);
+      border: 2px solid #c9920a;
+      border-radius: 6px;
+      padding: 36px 38px 30px;
+      box-shadow:
+        0 0 40px rgba(201,146,10,0.5),
+        0 0 80px rgba(201,146,10,0.2),
+        inset 0 0 30px rgba(0,0,0,0.6);
+      text-align: center;
+      color: #e0c875;
+    }
 
-        .instruction {
-            color: #aaa;
-            margin-bottom: 40px;
-            max-width: 80%;
-            line-height: 1.6;
-        }
+    /* Corner ornaments */
+    .spellbook::before, .spellbook::after {
+      content: '✦';
+      position: absolute;
+      font-size: 1.4rem;
+      color: #c9920a;
+      text-shadow: 0 0 8px #c9920a;
+    }
+    .spellbook::before { top: 10px; left: 16px; }
+    .spellbook::after  { top: 10px; right: 16px; }
 
-        .btn {
-            padding: 15px 45px;
-            font-size: 1.2rem;
-            cursor: pointer;
-            border-radius: 50px;
-            border: none;
-            background: #fff;
-            color: #000;
-            font-weight: bold;
-            box-shadow: 0 0 25px rgba(255, 255, 255, 0.3);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
+    .sb-ornament {
+      position: absolute;
+      font-size: 1.4rem;
+      color: #c9920a;
+      text-shadow: 0 0 8px #c9920a;
+    }
+    .sb-ornament.bl { bottom: 10px; left: 16px; }
+    .sb-ornament.br { bottom: 10px; right: 16px; }
 
-        .btn:hover {
-            transform: scale(1.08);
-            box-shadow: 0 0 40px rgba(255, 255, 255, 0.5);
-        }
+    .sb-divider {
+      border: none;
+      border-top: 1px solid rgba(201,146,10,0.4);
+      margin: 14px 0;
+    }
 
-        #loading-text {
-            display: none;
-            margin-top: 25px;
-            font-size: 1.1rem;
-            color: #01ffc3;
-            animation: pulse 1.5s infinite;
-        }
+    .sb-title {
+      font-size: clamp(1.5rem, 5vw, 2rem);
+      letter-spacing: 4px;
+      font-variant: small-caps;
+      color: #f0b429;
+      text-shadow: 0 0 10px #f0b429, 0 0 25px rgba(240,180,41,0.5);
+      margin-bottom: 4px;
+    }
 
-        #test-btn {
-            position: absolute;
-            bottom: 25px;
-            background: transparent;
-            color: #444;
-            border: 1px solid #222;
-            padding: 8px 18px;
-            font-size: 14px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+    .sb-subtitle {
+      font-size: 0.75rem;
+      color: #8a6a20;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
 
-        #canvas {
-            display: block;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
+    .spell-list {
+      list-style: none;
+      text-align: left;
+      margin: 0 0 22px;
+    }
 
-        #video { display: none; }
+    .spell-list li {
+      display: flex;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(201,146,10,0.15);
+    }
+    .spell-list li:last-child { border-bottom: none; }
 
-        @keyframes pulse {
-            0% { opacity: 0.4; }
-            50% { opacity: 1; }
-            100% { opacity: 0.4; }
-        }
-    </style>
+    .spell-icon { font-size: 1.4rem; flex-shrink: 0; line-height: 1.4; }
+
+    .spell-info { display: flex; flex-direction: column; gap: 2px; }
+
+    .spell-name {
+      color: #f0b429;
+      font-weight: bold;
+      font-size: 0.9rem;
+      text-shadow: 0 0 6px rgba(240,180,41,0.4);
+      letter-spacing: 1px;
+    }
+
+    .spell-desc {
+      color: #a08040;
+      font-size: 0.78rem;
+      line-height: 1.4;
+    }
+
+    #start-btn {
+      display: inline-block;
+      padding: 11px 36px;
+      font-size: 1rem;
+      cursor: pointer;
+      border: 2px solid #c9920a;
+      background: rgba(201,146,10,0.08);
+      color: #f0b429;
+      border-radius: 3px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      font-weight: bold;
+      transition: background 0.3s, box-shadow 0.3s;
+      font-family: inherit;
+    }
+
+    #start-btn:hover {
+      background: rgba(201,146,10,0.22);
+      box-shadow: 0 0 24px rgba(201,146,10,0.6);
+    }
+
+    #loading-text {
+      display: none;
+      color: #f0b429;
+      margin-top: 14px;
+      font-size: 0.85rem;
+      letter-spacing: 2px;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.35; }
+      50%       { opacity: 1; }
+    }
+
+    /* ── Runtime UI ── */
+    #canvas {
+      display: block;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* Hidden video — THE VOID */
+    #video {
+      position: absolute;
+      width: 1px; height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #gesture-hud {
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 5;
+      display: none;
+      pointer-events: none;
+      color: rgba(255,200,50,0.85);
+      font-size: 0.95rem;
+      letter-spacing: 3px;
+      text-shadow: 0 0 12px rgba(255,200,50,0.7);
+      text-transform: uppercase;
+    }
+  </style>
 </head>
 <body>
 
-    <div id="start-overlay">
-        <div class="title">TELEKINESIS REVEAL</div>
-        <div class="instruction">Allow camera access.<br>Pinch and hold securely to assemble.<br>Expand hand to disassemble.</div>
-        <button id="start-btn" class="btn">Start Experience</button>
-        <div id="loading-text">Initializing High Fidelity Tracking...</div>
-        <button id="test-btn">x</button>
+  <!-- Start screen -->
+  <div id="start-overlay">
+    <div class="spellbook">
+      <span class="sb-ornament bl">✦</span>
+      <span class="sb-ornament br">✦</span>
+
+      <div class="sb-title">📖 Spellbook</div>
+      <div class="sb-subtitle">Sorcerer's Sandbox</div>
+      <hr class="sb-divider">
+
+      <ul class="spell-list">
+        <li>
+          <span class="spell-icon">⭕</span>
+          <div class="spell-info">
+            <span class="spell-name">Summon Portal</span>
+            <span class="spell-desc">Use both hands with palms facing the camera. Pull them apart horizontally to tear open a portal between your palms.</span>
+          </div>
+        </li>
+        <li>
+          <span class="spell-icon">🔥</span>
+          <div class="spell-info">
+            <span class="spell-name">Fireball — Kamehameha</span>
+            <span class="spell-desc">Bring both palms together (cupped or fist-to-palm). Hold to charge the sphere, then push your hands forward to release it.</span>
+          </div>
+        </li>
+        <li>
+          <span class="spell-icon">🟣</span>
+          <div class="spell-info">
+            <span class="spell-name">Telekinesis</span>
+            <span class="spell-desc">Pinch (Index + Thumb) with both hands to summon a Dark Matter cube. Move your hands to levitate and rotate it.</span>
+          </div>
+        </li>
+      </ul>
+
+      <hr class="sb-divider">
+      <button id="start-btn">✦ Start Experiment ✦</button>
+      <div id="loading-text">Initializing Hand Tracking…</div>
     </div>
+  </div>
 
-    <video id="video" autoplay playsinline></video>
-    <canvas id="canvas"></canvas>
+  <!-- Hidden camera feed — kept off-screen so only the canvas (The Void) is visible -->
+  <video id="video" autoplay playsinline muted aria-label="Hidden camera feed for hand tracking"></video>
 
-    <script>
-        // --- 1. CONFIG & STATE ---
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const logoImg = new Image();
-        
-        let isImageReady = false;
-        logoImg.onload = () => { isImageReady = true; };
-        logoImg.src = '1000040550.png'; 
+  <!-- The Void canvas -->
+  <canvas id="canvas"></canvas>
 
-        let width, height, cx, cy;
-        let isTesting = false;
-        let state = 'START'; 
-        
-        let handState = 'NONE'; // Can be 'PINCH', 'EXPAND', or 'NONE'
-        let assembleProgress = 0; 
-        let currentHandDist = 0.15;
-        let lastHandSeen = 0;
+  <!-- Gesture HUD -->
+  <div id="gesture-hud"></div>
 
-        let hasSpawnedBirds = false;
-        let flashAlpha = 0; 
+  <script>
+  (function () {
+    'use strict';
 
-        const hindiChars = ['अ','आ','इ','ई','उ','ऊ','ए','ऐ','ओ','औ','क','ख','ग','घ','च','छ','ज','झ','ट','ठ','ड','ढ','त','थ','द','ध','न','प','फ','ब','भ','म','य','र','ल','व','श','ष','स','ह'];
-        const neonColors = ['#ff2a6d', '#05d9e8', '#01ffc3', '#d1f7ff', '#9d00ff'];
-        
-        let entities = [];
-        let activeBirds = [];
+    /* ═══════════════════════════════════════════
+       1. CANVAS & RESIZE
+    ═══════════════════════════════════════════ */
+    const canvas = document.getElementById('canvas');
+    const ctx    = canvas.getContext('2d');
+    const hud    = document.getElementById('gesture-hud');
 
-        function resize() {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-            cx = width / 2;
-            cy = height / 2;
+    let W, H, CX, CY;
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+      CX = W / 2;
+      CY = H / 2;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    /* ═══════════════════════════════════════════
+       2. APP STATE
+    ═══════════════════════════════════════════ */
+    let appState    = 'START';   // START | RUNNING
+    let gesture     = 'IDLE';   // IDLE | PORTAL | FIREBALL_CHARGING | FIREBALL_FLYING | TELEKINESIS
+    let lastHandTs  = 0;
+
+    // Raw hand landmark arrays from MediaPipe (up to 2)
+    let handData = [];
+
+    /* ═══════════════════════════════════════════
+       3. MATTER.JS — TELEKINESIS CUBE PHYSICS
+    ═══════════════════════════════════════════ */
+    const { Engine, Bodies, Body, World } = Matter;
+    const physEngine = Engine.create({ gravity: { x: 0, y: 0 } });
+    const physWorld  = physEngine.world;
+
+    const cubePhysBody = Bodies.rectangle(CX, CY, 90, 90, {
+      frictionAir: 0.18,
+      restitution: 0.2,
+      label: 'darkmatter'
+    });
+    World.add(physWorld, cubePhysBody);
+
+    let cubeVisible = false;
+    let cubeRX = 0, cubeRY = 0, cubeRZ = 0;
+
+    /* ═══════════════════════════════════════════
+       4. PORTAL PARTICLES
+    ═══════════════════════════════════════════ */
+    const portalParts = [];
+    let   portalAngle = 0;
+
+    function spawnPortalSpark(ox, oy, radius) {
+      const a = Math.random() * Math.PI * 2;
+      const r = radius + (Math.random() - 0.5) * 24;
+      portalParts.push({
+        x: ox + Math.cos(a) * r,
+        y: oy + Math.sin(a) * r,
+        vx: (Math.random() - 0.5) * 3.5,
+        vy: (Math.random() - 0.5) * 3.5,
+        life: 1.0,
+        decay: 0.022 + Math.random() * 0.03,
+        sz: 1.5 + Math.random() * 3,
+        hue: 18 + Math.random() * 40
+      });
+    }
+
+    function drawPortalParticles() {
+      for (let i = portalParts.length - 1; i >= 0; i--) {
+        const p = portalParts[i];
+        p.x += p.vx; p.y += p.vy;
+        p.life -= p.decay;
+        if (p.life <= 0) { portalParts.splice(i, 1); continue; }
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.sz * p.life, 0, Math.PI * 2);
+        ctx.fillStyle   = `hsla(${p.hue},100%,60%,${p.life.toFixed(2)})`;
+        ctx.shadowColor = `hsla(${p.hue},100%,60%,0.4)`;
+        ctx.shadowBlur  = 8;
+        ctx.fill();
+      }
+    }
+
+    function drawPortal(ax, ay, bx, by, t) {
+      const ox = (ax + bx) / 2;
+      const oy = (ay + by) / 2;
+      const r  = Math.hypot(bx - ax, by - ay) / 2;
+
+      // Spawn sparks
+      if (Math.random() < 0.35) spawnPortalSpark(ox, oy, r);
+
+      ctx.save();
+      ctx.translate(ox, oy);
+
+      // Outer glow rings
+      for (let g = 3; g >= 0; g--) {
+        const gr   = r + g * 7 * Math.abs(Math.sin(t * 0.002));
+        const a    = (4 - g) * 0.19;
+        ctx.beginPath();
+        ctx.arc(0, 0, gr, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255,${130 - g * 22},0,${a.toFixed(2)})`;
+        ctx.lineWidth   = 4 - g;
+        ctx.shadowColor = 'rgba(255,120,0,0.9)';
+        ctx.shadowBlur  = 22;
+        ctx.stroke();
+      }
+
+      // Rotating spark nodes
+      for (let i = 0; i < 28; i++) {
+        const ang  = (i / 28) * Math.PI * 2 + portalAngle;
+        const sr   = r + Math.sin(ang * 3 + t * 0.008) * 14;
+        const sx   = Math.cos(ang) * sr;
+        const sy   = Math.sin(ang) * sr;
+        const ssz  = 1.8 + Math.sin(ang * 5 + t * 0.006) * 1.4;
+        ctx.beginPath();
+        ctx.arc(sx, sy, ssz, 0, Math.PI * 2);
+        ctx.fillStyle   = `rgba(255,${120 + Math.floor(Math.random() * 135)},0,0.95)`;
+        ctx.shadowColor = 'rgba(255,160,0,1)';
+        ctx.shadowBlur  = 12;
+        ctx.fill();
+      }
+
+      // Dark void interior
+      const voidGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.72);
+      voidGrad.addColorStop(0,   'rgba(5,0,20,0.97)');
+      voidGrad.addColorStop(0.7, 'rgba(20,5,0,0.85)');
+      voidGrad.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.72, 0, Math.PI * 2);
+      ctx.fillStyle = voidGrad;
+      ctx.fill();
+
+      // Interior swirl
+      ctx.beginPath();
+      for (let i = 0; i < 40; i++) {
+        const sa = (i / 40) * Math.PI * 2 + portalAngle * 1.6;
+        const sr = r * 0.68 * (0.25 + 0.75 * (i / 40));
+        if (i === 0) ctx.moveTo(Math.cos(sa) * sr, Math.sin(sa) * sr);
+        else         ctx.lineTo(Math.cos(sa) * sr, Math.sin(sa) * sr);
+      }
+      ctx.strokeStyle = 'rgba(255,90,0,0.28)';
+      ctx.lineWidth   = 1;
+      ctx.stroke();
+
+      ctx.restore();
+
+      // Beam from each hand to portal edge
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,110,0,0.35)';
+      ctx.lineWidth   = 3;
+      ctx.shadowColor = 'rgba(255,150,0,0.7)';
+      ctx.shadowBlur  = 14;
+      [[ax, ay], [bx, by]].forEach(([hx, hy]) => {
+        const edgeX = ox + (hx - ox) * (r / Math.max(Math.hypot(hx - ox, hy - oy), 1));
+        const edgeY = oy + (hy - oy) * (r / Math.max(Math.hypot(hx - ox, hy - oy), 1));
+        ctx.beginPath();
+        ctx.moveTo(hx, hy);
+        ctx.lineTo(edgeX, edgeY);
+        ctx.stroke();
+      });
+      ctx.restore();
+    }
+
+    /* ═══════════════════════════════════════════
+       5. FIREBALL
+    ═══════════════════════════════════════════ */
+    const fbTrail   = [];
+    let   fbCharge  = 0;
+    let   fbPos     = null;   // { x, y } when flying
+    let   fbVel     = null;   // { x, y }
+    let   fbPrevHandMidY = null; // to detect "push forward" gesture
+
+    function spawnFbTrail(x, y, radius) {
+      fbTrail.push({
+        x: x + (Math.random() - 0.5) * radius * 0.6,
+        y: y + (Math.random() - 0.5) * radius * 0.6,
+        vx: (Math.random() - 0.5) * 2.2,
+        vy: (Math.random() - 0.5) * 2.2,
+        life: 1.0,
+        decay: 0.028 + Math.random() * 0.04,
+        sz: 4 + Math.random() * 10,
+        blue: 150 + Math.floor(Math.random() * 105)
+      });
+    }
+
+    function drawFbTrail() {
+      for (let i = fbTrail.length - 1; i >= 0; i--) {
+        const p = fbTrail[i];
+        p.x += p.vx; p.y += p.vy;
+        p.life -= p.decay;
+        if (p.life <= 0) { fbTrail.splice(i, 1); continue; }
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.sz * p.life, 0, Math.PI * 2);
+        ctx.fillStyle   = `rgba(90,180,${p.blue},${(p.life * 0.65).toFixed(2)})`;
+        ctx.shadowColor = 'rgba(100,200,255,0.4)';
+        ctx.shadowBlur  = 10;
+        ctx.fill();
+      }
+    }
+
+    function drawFireball(x, y, radius, charge) {
+      const gSz = radius * (1 + charge * 0.55);
+
+      ctx.save();
+
+      // Outer diffuse glow
+      const oGrad = ctx.createRadialGradient(x, y, 0, x, y, gSz * 2.2);
+      oGrad.addColorStop(0,   `rgba(130,210,255,${(charge * 0.12).toFixed(2)})`);
+      oGrad.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.beginPath();
+      ctx.arc(x, y, gSz * 2.2, 0, Math.PI * 2);
+      ctx.fillStyle = oGrad;
+      ctx.fill();
+
+      // Core
+      const cGrad = ctx.createRadialGradient(x - radius * 0.28, y - radius * 0.28, 0, x, y, radius);
+      cGrad.addColorStop(0,   'rgba(255,255,255,1)');
+      cGrad.addColorStop(0.22,'rgba(200,240,255,0.95)');
+      cGrad.addColorStop(0.6, `rgba(40,140,255,${charge.toFixed(2)})`);
+      cGrad.addColorStop(1,   'rgba(0,50,200,0)');
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fillStyle   = cGrad;
+      ctx.shadowColor = 'rgba(100,200,255,1)';
+      ctx.shadowBlur  = 35;
+      ctx.fill();
+
+      // Energy rings
+      for (let ring = 0; ring < 2; ring++) {
+        ctx.beginPath();
+        ctx.arc(x, y, radius * (1 + ring * 0.22), 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(160,230,255,${(0.55 - ring * 0.22).toFixed(2)})`;
+        ctx.lineWidth   = 2.5 - ring;
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    /* ═══════════════════════════════════════════
+       6. 3-D WIREFRAME CUBE
+    ═══════════════════════════════════════════ */
+    function rotX(v, a) {
+      const c = Math.cos(a), s = Math.sin(a);
+      return [v[0], v[1]*c - v[2]*s, v[1]*s + v[2]*c];
+    }
+    function rotY(v, a) {
+      const c = Math.cos(a), s = Math.sin(a);
+      return [v[0]*c + v[2]*s, v[1], -v[0]*s + v[2]*c];
+    }
+    function rotZ(v, a) {
+      const c = Math.cos(a), s = Math.sin(a);
+      return [v[0]*c - v[1]*s, v[0]*s + v[1]*c, v[2]];
+    }
+    function project(v, px, py) {
+      const fov = 340, z = v[2] + 420;
+      return [px + v[0] * fov / z, py + v[1] * fov / z];
+    }
+
+    const CUBE_EDGES = [
+      [0,1],[1,2],[2,3],[3,0],
+      [4,5],[5,6],[6,7],[7,4],
+      [0,4],[1,5],[2,6],[3,7]
+    ];
+
+    function drawCube(px, py, size, rx, ry, rz, alpha) {
+      const h = size / 2;
+      let verts = [
+        [-h,-h,-h],[h,-h,-h],[h,h,-h],[-h,h,-h],
+        [-h,-h, h],[h,-h, h],[h,h, h],[-h,h, h]
+      ];
+      verts = verts.map(v => rotX(v, rx));
+      verts = verts.map(v => rotY(v, ry));
+      verts = verts.map(v => rotZ(v, rz));
+      const proj = verts.map(v => project(v, px, py));
+
+      ctx.save();
+      ctx.strokeStyle = `rgba(185,0,255,${alpha.toFixed(2)})`;
+      ctx.shadowColor = 'rgba(185,0,255,0.9)';
+      ctx.shadowBlur  = 18;
+      ctx.lineWidth   = 2;
+
+      CUBE_EDGES.forEach(([a, b]) => {
+        ctx.beginPath();
+        ctx.moveTo(proj[a][0], proj[a][1]);
+        ctx.lineTo(proj[b][0], proj[b][1]);
+        ctx.stroke();
+      });
+
+      ctx.fillStyle = `rgba(220,110,255,${alpha.toFixed(2)})`;
+      proj.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p[0], p[1], 3.5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.restore();
+    }
+
+    /* ═══════════════════════════════════════════
+       7. GESTURE DETECTION HELPERS
+    ═══════════════════════════════════════════ */
+    // Map MediaPipe normalized landmark → mirrored screen coords
+    function lm2sc(lm) {
+      return { x: (1 - lm.x) * W, y: lm.y * H };
+    }
+
+    function palmCenter(lms) {
+      // midpoint of wrist (0) and middle-MCP (9)
+      return {
+        x: (lms[0].x + lms[9].x) / 2,
+        y: (lms[0].y + lms[9].y) / 2
+      };
+    }
+
+    function pinchMid(lms) {
+      return {
+        x: (lms[4].x + lms[8].x) / 2,
+        y: (lms[4].y + lms[8].y) / 2
+      };
+    }
+
+    function isPalmOpen(lms) {
+      // ≥3 of 4 fingers extended (tip.y < mcp.y in normalized space)
+      const tips = [8, 12, 16, 20];
+      const mcps = [5,  9, 13, 17];
+      let ext = 0;
+      for (let i = 0; i < 4; i++) {
+        if (lms[tips[i]].y < lms[mcps[i]].y) ext++;
+      }
+      return ext >= 3;
+    }
+
+    function isPinching(lms) {
+      // 0.075 in MediaPipe normalized coords ≈ 7.5% of frame width — reliably detects index-thumb pinch
+      return Math.hypot(lms[4].x - lms[8].x, lms[4].y - lms[8].y) < 0.075;
+    }
+
+    function isCupped(lms) {
+      // ≥3 fingers curled (tip.y > pip.y)
+      const tips = [8, 12, 16, 20];
+      const pips = [6, 10, 14, 18];
+      let curl = 0;
+      for (let i = 0; i < 4; i++) {
+        if (lms[tips[i]].y > lms[pips[i]].y) curl++;
+      }
+      return curl >= 3;
+    }
+
+    /* ═══════════════════════════════════════════
+       8. MAIN ANIMATION LOOP
+    ═══════════════════════════════════════════ */
+    let lastTs = 0;
+
+    function animate(ts) {
+      requestAnimationFrame(animate);
+
+      // Cap dt at 50ms to prevent physics instability during tab-switch frame drops
+      const dt = Math.min((ts - lastTs) / 1000, 0.05);
+      lastTs = ts;
+
+      ctx.clearRect(0, 0, W, H);
+
+      if (appState !== 'RUNNING') return;
+
+      // Clear hand data after 800ms without detection to prevent stale gestures
+      if (Date.now() - lastHandTs > 800) handData = [];
+
+      // Step physics
+      Engine.update(physEngine, dt * 1000);
+
+      portalAngle += 0.032;
+
+      // ── Gesture classification ──
+      const h0 = handData[0];
+      const h1 = handData[1];
+
+      let newGesture = 'IDLE';
+      let p0sc = null, p1sc = null;  // palm centers in screen coords
+      let pin0sc = null, pin1sc = null; // pinch midpoints in screen coords
+
+      if (h0 && h1) {
+        const open0   = isPalmOpen(h0);
+        const open1   = isPalmOpen(h1);
+        const cup0    = isCupped(h0);
+        const cup1    = isCupped(h1);
+        const pinch0  = isPinching(h0);
+        const pinch1  = isPinching(h1);
+
+        const pc0     = palmCenter(h0);
+        const pc1     = palmCenter(h1);
+        p0sc = lm2sc(pc0);
+        p1sc = lm2sc(pc1);
+        const screenDist = Math.hypot(p0sc.x - p1sc.x, p0sc.y - p1sc.y);
+
+        if (open0 && open1 && screenDist > W * 0.24) {
+          newGesture = 'PORTAL';
+        } else if ((cup0 || open0) && (cup1 || open1) && screenDist < W * 0.22) {
+          // W * 0.22 — hands within ~22% of screen width means palms are cupped together
+          newGesture = (gesture === 'FIREBALL_FLYING') ? 'FIREBALL_FLYING' : 'FIREBALL_CHARGING';
+        } else if (pinch0 && pinch1) {
+          newGesture = 'TELEKINESIS';
+          pin0sc = lm2sc(pinchMid(h0));
+          pin1sc = lm2sc(pinchMid(h1));
         }
-        window.addEventListener('resize', resize);
-        resize();
+      }
 
-        function easeInOutCubic(x) {
-            return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+      // ── Fireball throw transition ──
+      if (gesture === 'FIREBALL_CHARGING' && newGesture === 'IDLE' && fbCharge > 0.38) {
+        newGesture = 'FIREBALL_FLYING';
+        if (!fbPos && p0sc && p1sc) {
+          fbPos = { x: (p0sc.x + p1sc.x) / 2, y: (p0sc.y + p1sc.y) / 2 };
+        } else if (!fbPos) {
+          fbPos = { x: CX, y: CY };
         }
+        // Throw direction: upward-forward by default, with slight x from hand orientation
+        const dx = (p0sc && p1sc) ? (p0sc.x + p1sc.x) / 2 - CX : 0;
+        fbVel = { x: dx * 0.04, y: -13 };
+      }
 
-        const birdSpawns = [
-            // Top Right Cluster (from original logo)
-            { rx: 0.24, ry: -0.24, angle: 1.0, speed: 2.2 }, 
-            { rx: 0.33, ry: -0.25, angle: 1.2, speed: 2.8 }, 
-            { rx: 0.40, ry: -0.38, angle: 0.8, speed: 2.4 }, 
-            // Bottom Left Cluster (from original logo)
-            { rx: -0.22, ry: 0.28, angle: -0.8, speed: 2.2 }, 
-            { rx: -0.26, ry: 0.38, angle: -1.0, speed: 2.8 },
-            { rx: -0.15, ry: 0.35, angle: -0.6, speed: 2.4 }
-        ];
+      gesture = newGesture;
 
-        // --- 2. ENTITIES ---
+      // ── HUD ──
+      const hudLabels = {
+        PORTAL:             '⭕  PORTAL',
+        FIREBALL_CHARGING:  '⚡  CHARGING…',
+        FIREBALL_FLYING:    '🔥  FIREBALL!',
+        TELEKINESIS:        '🟣  TELEKINESIS'
+      };
+      if (gesture !== 'IDLE') {
+        hud.style.display = 'block';
+        hud.textContent   = hudLabels[gesture] || '';
+      } else {
+        hud.style.display = 'none';
+      }
 
-        class FloatingEntity {
-            constructor(type, content, rx = 0, ry = 0, angle = 0) {
-                this.type = type; 
-                this.content = content; 
-                this.rx = rx; 
-                this.ry = ry; 
-                this.targetAngle = angle;
-                
-                this.floatX = Math.random() * width;
-                this.floatY = Math.random() * height;
-                this.vx = (Math.random() - 0.5) * 1.5;
-                this.vy = (Math.random() - 0.5) * 1.5;
-                
-                this.color = neonColors[Math.floor(Math.random() * neonColors.length)];
-                this.baseSize = Math.random() * 20 + 15; 
-                this.baseAlpha = Math.random() * 0.4 + 0.2;
-                this.flapOffset = Math.random() * Math.PI * 2; 
-            }
+      /* ── RENDER ── */
 
-            update(progress, imgWidth, imgHeight, isLogoLoaded, dt) {
-                const ts = dt * 60; 
-                this.floatX += this.vx * ts;
-                this.floatY += this.vy * ts;
+      // PORTAL
+      if (gesture === 'PORTAL' && p0sc && p1sc) {
+        drawPortal(p0sc.x, p0sc.y, p1sc.x, p1sc.y, ts);
+      }
+      drawPortalParticles();
 
-                if (this.floatX < -50) this.floatX = width + 50;
-                if (this.floatX > width + 50) this.floatX = -50;
-                if (this.floatY < -50) this.floatY = height + 50;
-                if (this.floatY > height + 50) this.floatY = -50;
-
-                let drawX = this.floatX;
-                let drawY = this.floatY;
-                let currentAlpha = this.baseAlpha;
-                let currentSize = this.baseSize;
-                let currentColor = this.color;
-
-                const easeProg = easeInOutCubic(progress);
-
-                if (this.type !== 'bg') {
-                    const targetX = cx + (this.rx * imgWidth);
-                    const targetY = cy + (this.ry * imgHeight);
-                    drawX = this.floatX + (targetX - this.floatX) * easeProg;
-                    drawY = this.floatY + (targetY - this.floatY) * easeProg;
-                    
-                    if (progress > 0.5) currentColor = '#ffffff';
-
-                    let targetSize = this.baseSize;
-                    if (this.type === 'text') targetSize = imgWidth * 0.35;
-                    if (this.type === 'diamond') targetSize = imgWidth * 0.018; 
-                    if (this.type === 'bird') targetSize = imgWidth * 0.035;
-
-                    currentSize = this.baseSize + (targetSize - this.baseSize) * easeProg;
-                    currentAlpha = this.baseAlpha + (1.0 - this.baseAlpha) * easeProg;
-
-                    // Hide completely when logo fully formed
-                    if (isLogoLoaded && progress > 0.98) currentAlpha = 0; 
-                } else {
-                    const angle = Math.atan2(this.floatY - cy, this.floatX - cx);
-                    const pushDistance = easeProg * (width * 0.5);
-                    drawX = this.floatX + Math.cos(angle) * pushDistance;
-                    drawY = this.floatY + Math.sin(angle) * pushDistance;
-                    currentAlpha = this.baseAlpha * (1 - easeProg * 1.5);
-                }
-
-                if (currentAlpha > 0) {
-                    ctx.save();
-                    ctx.globalAlpha = Math.max(0, Math.min(1, currentAlpha));
-                    ctx.fillStyle = currentColor;
-                    ctx.shadowColor = currentColor;
-                    ctx.shadowBlur = progress > 0.7 ? 15 : 5;
-
-                    if (this.type === 'bird') {
-                        ctx.translate(drawX, drawY);
-                        ctx.rotate(this.targetAngle * easeProg);
-                        const scale = currentSize / 40;
-                        ctx.scale(scale, scale);
-                        
-                        // Flapping strictly scales to 0 as it hits the final shape
-                        const flapIntensity = 16 * (1 - easeProg);
-                        const flap = Math.sin(Date.now() * 0.012 + this.flapOffset) * flapIntensity;
-                        
-                        ctx.beginPath();
-                        ctx.moveTo(0, -6);
-                        ctx.quadraticCurveTo(12, -6 + flap, 20, 8 + flap);
-                        ctx.quadraticCurveTo(8, 4, 0, 0);
-                        ctx.quadraticCurveTo(-8, 4, -20, 8 + flap);
-                        ctx.quadraticCurveTo(-12, -6 + flap, 0, -6);
-                        ctx.fill();
-
-                    } else if (this.type === 'diamond') {
-                        ctx.translate(drawX, drawY);
-                        const r = currentSize * 0.75; 
-                        ctx.beginPath();
-                        ctx.moveTo(0, -r); ctx.lineTo(r, 0); ctx.lineTo(0, r); ctx.lineTo(-r, 0);
-                        ctx.closePath();
-                        ctx.fill();
-
-                    } else {
-                        ctx.font = `bold ${currentSize}px sans-serif`;
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText(this.content, drawX, drawY);
-                    }
-                    ctx.restore();
-                }
-            }
+      // FIREBALL CHARGING
+      if (gesture === 'FIREBALL_CHARGING') {
+        fbCharge = Math.min(1, fbCharge + dt * 0.55);
+        if (p0sc && p1sc) {
+          const mx = (p0sc.x + p1sc.x) / 2;
+          const my = (p0sc.y + p1sc.y) / 2;
+          const rad = 20 + fbCharge * 42;
+          if (Math.random() < 0.45) spawnFbTrail(mx, my, rad);
+          drawFireball(mx, my, rad, fbCharge);
         }
+      } else if (gesture !== 'FIREBALL_FLYING') {
+        fbCharge = Math.max(0, fbCharge - dt * 1.8);
+      }
 
-        class FlyingBird {
-            constructor(x, y, angle, speed, birdScale) {
-                this.x = x; this.y = y; 
-                this.vx = Math.sin(angle) * speed; 
-                this.vy = -Math.cos(angle) * speed; 
-                this.alpha = 1.0;
-                this.scale = birdScale; 
-                this.angle = angle; 
-                this.flapOffset = Math.random() * Math.PI * 2; 
-            }
-
-            update(dt) {
-                const ts = dt * 60;
-                this.x += this.vx * ts; this.y += this.vy * ts;
-                this.alpha -= 0.006 * ts; 
-            }
-
-            draw() {
-                if (this.alpha <= 0) return;
-                ctx.save();
-                ctx.translate(this.x, this.y);
-                ctx.rotate(this.angle);
-                ctx.scale(this.scale, this.scale);
-                ctx.globalAlpha = Math.max(0, Math.min(1, this.alpha));
-                ctx.fillStyle = '#ffffff';
-                ctx.shadowColor = '#ffffff';
-                ctx.shadowBlur = 10;
-                
-                // Escaping birds ALWAYS flap continuously
-                const flap = Math.sin(Date.now() * 0.02 + this.flapOffset) * 16; 
-                ctx.beginPath();
-                ctx.moveTo(0, -6);
-                ctx.quadraticCurveTo(12, -6 + flap, 20, 8 + flap);
-                ctx.quadraticCurveTo(8, 4, 0, 0);
-                ctx.quadraticCurveTo(-8, 4, -20, 8 + flap);
-                ctx.quadraticCurveTo(-12, -6 + flap, 0, -6);
-                ctx.fill();
-                ctx.restore();
-            }
+      // FIREBALL FLYING
+      if (gesture === 'FIREBALL_FLYING' && fbPos) {
+        fbPos.x += fbVel.x;
+        fbPos.y += fbVel.y;
+        const rad = 22 + fbCharge * 42;
+        spawnFbTrail(fbPos.x, fbPos.y, rad);
+        drawFireball(fbPos.x, fbPos.y, rad, fbCharge);
+        fbCharge -= dt * 0.28;
+        if (fbCharge <= 0 ||
+            fbPos.x < -120 || fbPos.x > W + 120 ||
+            fbPos.y < -120 || fbPos.y > H + 120) {
+          gesture = 'IDLE';
+          fbPos = null; fbVel = null; fbCharge = 0;
         }
+      }
+      drawFbTrail();
 
-        function initScene() {
-            entities = [];
-            for (let i = 0; i < 150; i++) {
-                const char = hindiChars[Math.floor(Math.random() * hindiChars.length)];
-                entities.push(new FloatingEntity('bg', char));
-            }
-            entities.push(new FloatingEntity('text', 'उ', -0.27, 0.02));
-            entities.push(new FloatingEntity('text', 'डा', -0.01, 0.02)); // Using 'डा' (no integrated dot)
-            entities.push(new FloatingEntity('text', 'न', 0.28, 0.02));
-            entities.push(new FloatingEntity('diamond', null, -0.05, 0.28));
-            birdSpawns.forEach(spawn => {
-                entities.push(new FloatingEntity('bird', null, spawn.rx, spawn.ry, spawn.angle));
-            });
-        }
+      // TELEKINESIS
+      if (gesture === 'TELEKINESIS' && pin0sc && pin1sc) {
+        cubeVisible = true;
+        const mx = (pin0sc.x + pin1sc.x) / 2;
+        const my = (pin0sc.y + pin1sc.y) / 2;
 
-        function spawnFlyingBirds(imgWidth, imgHeight) {
-            const birdScale = (imgWidth * 0.035) / 40; 
-            birdSpawns.forEach(point => {
-                const startX = cx + (imgWidth * point.rx);
-                const startY = cy + (imgHeight * point.ry);
-                activeBirds.push(new FlyingBird(startX, startY, point.angle, point.speed, birdScale));
-            });
-        }
-
-        // --- 3. 120Hz LOOP ---
-        let lastTime = 0;
-
-        function animate(timestamp) {
-            requestAnimationFrame(animate);
-            if (!lastTime) lastTime = timestamp;
-            let dt = (timestamp - lastTime) / 1000;
-            lastTime = timestamp;
-            if (dt > 0.1) dt = 0.016;
-
-            ctx.clearRect(0, 0, width, height);
-            
-            let imgWidth = Math.min(width * 0.8, 800);
-            let imgHeight = imgWidth * 0.5; 
-            if (isImageReady && logoImg.naturalWidth > 0) {
-                imgHeight = (logoImg.naturalHeight / logoImg.naturalWidth) * imgWidth;
-                const maxHeight = height * 0.6;
-                if (imgHeight > maxHeight) {
-                    imgHeight = maxHeight;
-                    imgWidth = (logoImg.naturalWidth / logoImg.naturalHeight) * imgHeight;
-                }
-            }
-
-            if (state === 'RUNNING') {
-                if (!isTesting) {
-                    // Reset to NONE if camera lost for 0.5s
-                    if (Date.now() - lastHandSeen > 500) {
-                        handState = 'NONE';
-                    }
-                }
-
-                // EXACTLY 4 SECONDS PACING
-                const speed = 0.25; 
-                
-                // Smart State Logic
-                if (handState === 'PINCH') {
-                    assembleProgress += speed * dt; 
-                } else if (handState === 'EXPAND') {
-                    assembleProgress -= speed * dt;
-                } else if (handState === 'NONE') {
-                    // If not fully assembled, gracefully fall apart when let go
-                    // If 1.0 (fully assembled), it stays locked until user explicitly EXPANDS
-                    if (assembleProgress < 1.0) {
-                        assembleProgress -= speed * dt;
-                    }
-                }
-                
-                // Strict clamping
-                assembleProgress = Math.max(0, Math.min(1, assembleProgress));
-
-                // Fire spawn event exactly upon reaching 1.0
-                if (assembleProgress === 1.0 && !hasSpawnedBirds) {
-                    flashAlpha = 1.0; 
-                    spawnFlyingBirds(imgWidth, imgHeight); 
-                    hasSpawnedBirds = true;
-                } else if (assembleProgress < 0.90) {
-                    // Reset spawn lock if user expands hand significantly
-                    hasSpawnedBirds = false; 
-                }
-            }
-
-            entities.forEach(ent => ent.update(assembleProgress, imgWidth, imgHeight, isImageReady, dt));
-
-            if (assembleProgress > 0.95 && isImageReady && logoImg.naturalWidth > 0) {
-                const imgAlpha = (assembleProgress - 0.95) / 0.05;
-                
-                ctx.save();
-                ctx.globalAlpha = Math.max(0, Math.min(1, imgAlpha));
-                ctx.drawImage(logoImg, cx - imgWidth/2, cy - imgHeight/2, imgWidth, imgHeight);
-                ctx.restore();
-
-                if (flashAlpha > 0) {
-                    ctx.save();
-                    ctx.globalAlpha = flashAlpha;
-                    ctx.filter = 'brightness(1800%) drop-shadow(0 0 25px #ffffff)';
-                    ctx.drawImage(logoImg, cx - imgWidth/2, cy - imgHeight/2, imgWidth, imgHeight);
-                    ctx.restore();
-                    flashAlpha -= 1.4 * dt; 
-                }
-            }
-
-            if (flashAlpha < 0) flashAlpha = 0;
-
-            for (let i = activeBirds.length - 1; i >= 0; i--) {
-                activeBirds[i].update(dt);
-                activeBirds[i].draw();
-                if (activeBirds[i].alpha <= 0) activeBirds.splice(i, 1);
-            }
-        }
-
-        // --- 4. VISION ---
-        function onHandResults(results) {
-            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                const landmarks = results.multiHandLandmarks[0];
-                const thumb = landmarks[4];
-                const index = landmarks[8];
-                currentHandDist = Math.hypot(thumb.x - index.x, thumb.y - index.y);
-                lastHandSeen = Date.now();
-
-                // Advanced Strict Tracking States
-                if (currentHandDist < 0.07) {
-                    handState = 'PINCH';
-                } else if (currentHandDist > 0.12) {
-                    handState = 'EXPAND'; // Deliberate expansion needed to break the lock
-                }
-            }
-        }
-
-        async function initCamera() {
-            const videoElement = document.getElementById('video');
-            const startOverlay = document.getElementById('start-overlay');
-            const loadingText = document.getElementById('loading-text');
-            const startBtn = document.getElementById('start-btn');
-
-            startBtn.style.display = 'none';
-            loadingText.style.display = 'block';
-
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'user', frameRate: { ideal: 60 } } 
-                });
-                videoElement.srcObject = stream;
-                const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-                hands.setOptions({maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.85, minTrackingConfidence: 0.85});
-                hands.onResults(onHandResults);
-
-                videoElement.onloadedmetadata = () => {
-                    videoElement.play();
-                    let lastVTime = -1;
-                    const processV = async () => {
-                        if (!videoElement.paused && !videoElement.ended) {
-                            if (videoElement.currentTime !== lastVTime) {
-                                lastVTime = videoElement.currentTime;
-                                await hands.send({image: videoElement});
-                            }
-                        }
-                        requestAnimationFrame(processV);
-                    };
-                    processV(); 
-                    startOverlay.style.display = 'none';
-                    state = 'RUNNING';
-                };
-            } catch (err) {
-                console.error(err);
-                alert("Camera Error. Using Test Mode.");
-                startBtn.style.display = 'inline-block';
-                loadingText.style.display = 'none';
-            }
-        }
-
-        // --- 5. INTERACT ---
-        function startTestMode() { document.getElementById('start-overlay').style.display = 'none'; state = 'RUNNING'; isTesting = true; }
-        
-        let initialTDist = null;
-        
-        window.addEventListener('touchstart', (e) => {
-            if (isTesting && e.touches.length === 2) initialTDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        // Spring force toward hand midpoint
+        const fdx = mx - cubePhysBody.position.x;
+        const fdy = my - cubePhysBody.position.y;
+        Body.applyForce(cubePhysBody, cubePhysBody.position, {
+          x: fdx * 0.0012, y: fdy * 0.0012
         });
-        window.addEventListener('touchmove', (e) => {
-            if (isTesting && e.touches.length === 2 && initialTDist !== null) {
-                const cur = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-                if (cur < initialTDist - 40) handState = 'PINCH';
-                else if (cur > initialTDist + 40) handState = 'EXPAND';
-            }
+
+        cubeRX += 0.022;
+        cubeRY += 0.031;
+
+        // Dashed tether lines
+        ctx.save();
+        ctx.setLineDash([5, 7]);
+        ctx.strokeStyle = 'rgba(185,0,255,0.38)';
+        ctx.lineWidth   = 1.5;
+        ctx.shadowColor = 'rgba(185,0,255,0.3)';
+        ctx.shadowBlur  = 8;
+        [pin0sc, pin1sc].forEach(p => {
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(cubePhysBody.position.x, cubePhysBody.position.y);
+          ctx.stroke();
         });
-        window.addEventListener('touchend', (e) => {
-            if (e.touches.length < 2) {
-                initialTDist = null;
-                handState = 'NONE';
-            }
+        ctx.restore();
+
+        // Pinch dots
+        [pin0sc, pin1sc].forEach(p => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 9, 0, Math.PI * 2);
+          ctx.fillStyle   = 'rgba(210,100,255,0.85)';
+          ctx.shadowColor = 'rgba(210,100,255,0.9)';
+          ctx.shadowBlur  = 18;
+          ctx.fill();
         });
 
-        // Desktop testing: Left Click = Pinch, Right Click = Expand
-        window.addEventListener('mousedown', (e) => { 
-            if(isTesting) {
-                if (e.button === 0) handState = 'PINCH'; 
-                else if (e.button === 2) handState = 'EXPAND'; 
-            }
+        drawCube(cubePhysBody.position.x, cubePhysBody.position.y, 90, cubeRX, cubeRY, cubeRZ, 1);
+      } else if (cubeVisible && gesture !== 'TELEKINESIS') {
+        // Gently fade out / keep spinning
+        cubeRX += 0.012;
+        cubeRY += 0.018;
+        drawCube(cubePhysBody.position.x, cubePhysBody.position.y, 90, cubeRX, cubeRY, cubeRZ, 0.38);
+        // Drift cube off over time
+        Body.applyForce(cubePhysBody, cubePhysBody.position, { x: 0, y: -0.0008 });
+        if (cubePhysBody.position.y < -200) {
+          cubeVisible = false;
+          Body.setPosition(cubePhysBody, { x: CX, y: CY });
+          Body.setVelocity(cubePhysBody, { x: 0, y: 0 });
+        }
+      }
+
+      // Subtle fingertip dots
+      if (handData.length > 0) {
+        ctx.save();
+        handData.forEach(lms => {
+          [4, 8, 12, 16, 20].forEach(idx => {
+            const p = lm2sc(lms[idx]);
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 4.5, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.22)';
+            ctx.fill();
+          });
         });
-        window.addEventListener('mouseup', () => { if(isTesting) handState = 'NONE'; });
-        window.addEventListener('contextmenu', e => { if(isTesting) e.preventDefault(); });
-        
-        document.getElementById('start-btn').addEventListener('click', initCamera);
-        document.getElementById('test-btn').addEventListener('click', startTestMode);
-        
-        initScene();
-        requestAnimationFrame(animate); 
-    </script>
+        ctx.restore();
+      }
+    }
+
+    /* ═══════════════════════════════════════════
+       9. MEDIAPIPE HANDS
+    ═══════════════════════════════════════════ */
+    function onHandResults(results) {
+      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        handData   = results.multiHandLandmarks;
+        lastHandTs = Date.now();
+      } else {
+        handData = [];
+      }
+    }
+
+    /* ═══════════════════════════════════════════
+       10. CAMERA INIT (with graceful error handling)
+    ═══════════════════════════════════════════ */
+    async function initCamera() {
+      const videoEl   = document.getElementById('video');
+      const startBtn  = document.getElementById('start-btn');
+      const loadTxt   = document.getElementById('loading-text');
+      const overlay   = document.getElementById('start-overlay');
+
+      startBtn.style.display = 'none';
+      loadTxt.style.display  = 'block';
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode:  'user',
+            width:       { ideal: 1280 },
+            height:      { ideal: 720 },
+            frameRate:   { ideal: 30, max: 60 }
+          }
+        });
+        videoEl.srcObject = stream;
+
+        const detector = new Hands({
+          locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+        });
+
+        detector.setOptions({
+          maxNumHands:           2,
+          modelComplexity:       0,   // 0 = lite, faster on mobile
+          minDetectionConfidence: 0.68,
+          minTrackingConfidence:  0.68
+        });
+
+        detector.onResults(onHandResults);
+
+        videoEl.onloadedmetadata = () => {
+          videoEl.play();
+          overlay.style.display = 'none';
+          appState = 'RUNNING';
+
+          // Process video frames for hand detection
+          let lastVTime = -1;
+          const processFrame = async () => {
+            if (!videoEl.paused && !videoEl.ended && videoEl.currentTime !== lastVTime) {
+              lastVTime = videoEl.currentTime;
+              await detector.send({ image: videoEl });
+            }
+            requestAnimationFrame(processFrame);
+          };
+          requestAnimationFrame(processFrame);
+        };
+
+      } catch (err) {
+        console.error('[Sorcerer\'s Sandbox] Camera error:', err);
+
+        let msg = 'An unknown error occurred accessing the camera.';
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          msg = 'Camera permission was denied.\nPlease allow camera access in your browser settings and refresh the page.';
+        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+          msg = 'No camera found on this device.\nPlease connect a camera and refresh the page.';
+        } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+          msg = 'Camera is already in use by another application.\nPlease close other apps using the camera and try again.';
+        } else if (err.name === 'OverconstrainedError') {
+          msg = 'Camera does not meet the required constraints.\nTrying a different device may resolve this.';
+        } else if (err.name === 'SecurityError') {
+          msg = 'Camera access is blocked by a security policy.\nThis page must be served over HTTPS.';
+        }
+
+        alert(`⚠️ Sorcerer's Sandbox\n\n${msg}`);
+        startBtn.style.display = 'inline-block';
+        loadTxt.style.display  = 'none';
+      }
+    }
+
+    /* ═══════════════════════════════════════════
+       11. BOOTSTRAP
+    ═══════════════════════════════════════════ */
+    document.getElementById('start-btn').addEventListener('click', initCamera);
+    requestAnimationFrame(animate);
+
+  }());
+  </script>
 </body>
 </html>
-
-
