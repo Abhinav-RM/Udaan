@@ -3,18 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Udaan Cinematic Reveal</title>
+    <title>Kinetic Clock Workshop</title>
     
-    <!-- Load MediaPipe Hands Directly -->
+    <!-- MediaPipe Hands -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <!-- Matter.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body, html {
-            margin: 0;
-            padding: 0;
             width: 100%;
             height: 100%;
-            background: #050505;
+            background: #000;
             overflow: hidden;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             touch-action: none;
@@ -30,62 +32,94 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: rgba(0, 0, 0, 0.9);
-            backdrop-filter: blur(8px);
-            z-index: 10;
+            background: #000;
+            z-index: 100;
             color: white;
             text-align: center;
+            padding: 20px;
         }
 
         .title {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-            text-shadow: 0 0 10px rgba(255,255,255,0.5);
-            letter-spacing: 2px;
+            font-size: 2rem;
+            margin-bottom: 25px;
+            text-shadow: 0 0 20px rgba(100, 180, 255, 0.6);
+            letter-spacing: 3px;
+            color: #fff;
         }
 
-        .instruction {
-            color: #aaa;
-            margin-bottom: 40px;
-            max-width: 80%;
-            line-height: 1.6;
+        .manual {
+            max-width: 500px;
+            margin-bottom: 30px;
+            text-align: left;
+            background: rgba(20, 40, 80, 0.3);
+            border: 1px solid rgba(100, 180, 255, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .manual-title {
+            font-size: 1.2rem;
+            color: #6ab4ff;
+            margin-bottom: 15px;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(100, 180, 255, 0.5);
+        }
+
+        .spell {
+            margin-bottom: 12px;
+            padding-left: 10px;
+            border-left: 2px solid #4a90d9;
+            line-height: 1.5;
+        }
+
+        .spell-name {
+            color: #6ab4ff;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        .spell-desc {
+            color: #aac8e8;
+            font-size: 0.85rem;
         }
 
         .btn {
             padding: 15px 45px;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             cursor: pointer;
             border-radius: 50px;
-            border: none;
-            background: #fff;
-            color: #000;
+            border: 2px solid #6ab4ff;
+            background: transparent;
+            color: #6ab4ff;
             font-weight: bold;
-            box-shadow: 0 0 25px rgba(255, 255, 255, 0.3);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 25px rgba(100, 180, 255, 0.3);
+            transition: all 0.4s ease;
         }
 
         .btn:hover {
-            transform: scale(1.08);
-            box-shadow: 0 0 40px rgba(255, 255, 255, 0.5);
+            transform: scale(1.05);
+            background: rgba(100, 180, 255, 0.15);
+            box-shadow: 0 0 40px rgba(100, 180, 255, 0.5);
         }
 
         #loading-text {
             display: none;
-            margin-top: 25px;
-            font-size: 1.1rem;
-            color: #01ffc3;
+            margin-top: 20px;
+            font-size: 1rem;
+            color: #6ab4ff;
             animation: pulse 1.5s infinite;
         }
 
         #test-btn {
             position: absolute;
-            bottom: 25px;
+            bottom: 15px;
+            right: 15px;
             background: transparent;
-            color: #444;
+            color: #333;
             border: 1px solid #222;
-            padding: 8px 18px;
-            font-size: 14px;
-            border-radius: 5px;
+            padding: 6px 14px;
+            font-size: 12px;
+            border-radius: 4px;
             cursor: pointer;
         }
 
@@ -101,6 +135,32 @@
 
         #video { display: none; }
 
+        #time-display {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #6ab4ff;
+            font-size: 1.5rem;
+            font-family: monospace;
+            text-shadow: 0 0 10px rgba(100, 180, 255, 0.5);
+            z-index: 50;
+            display: none;
+        }
+
+        #gesture-indicator {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #6ab4ff;
+            font-size: 0.9rem;
+            text-shadow: 0 0 10px rgba(100, 180, 255, 0.5);
+            z-index: 50;
+            display: none;
+            opacity: 0.8;
+        }
+
         @keyframes pulse {
             0% { opacity: 0.4; }
             50% { opacity: 1; }
@@ -111,43 +171,84 @@
 <body>
 
     <div id="start-overlay">
-        <div class="title">TELEKINESIS REVEAL</div>
-        <div class="instruction">Allow camera access.<br>Pinch and hold securely to assemble.<br>Expand hand to disassemble.</div>
-        <button id="start-btn" class="btn">Start Experience</button>
-        <div id="loading-text">Initializing High Fidelity Tracking...</div>
-        <button id="test-btn">x</button>
+        <div class="title">⚙️ KINETIC CLOCK WORKSHOP ⚙️</div>
+        
+        <div class="manual">
+            <div class="manual-title">📜 Manual of Spells 📜</div>
+            
+            <div class="spell">
+                <div class="spell-name">🖐️ SELECTION</div>
+                <div class="spell-desc">Open both hands (palms out) to enter Selection Mode. Hover over parts to highlight them in a glowing blue coating.</div>
+            </div>
+            
+            <div class="spell">
+                <div class="spell-name">🤏 CONFIRM</div>
+                <div class="spell-desc">Pinch both hands simultaneously to lock the selection.</div>
+            </div>
+            
+            <div class="spell">
+                <div class="spell-name">✋ MANIPULATE</div>
+                <div class="spell-desc">Once confirmed, drop one hand. Move the remaining hand to drag the part away.</div>
+            </div>
+            
+            <div class="spell">
+                <div class="spell-name">🔄 ROTATE</div>
+                <div class="spell-desc">Move the hand in a circular motion to spin the selected part.</div>
+            </div>
+            
+            <div class="spell">
+                <div class="spell-name">💥 BREAK</div>
+                <div class="spell-desc">While a part is selected, use one hand to perform a fast "chopping" motion across the object to split it in half.</div>
+            </div>
+        </div>
+        
+        <button id="start-btn" class="btn">Initialize System</button>
+        <div id="loading-text">Initializing Vision System...</div>
+        <button id="test-btn">Test Mode</button>
     </div>
 
     <video id="video" autoplay playsinline></video>
     <canvas id="canvas"></canvas>
+    <div id="time-display"></div>
+    <div id="gesture-indicator"></div>
 
     <script>
-        // --- 1. CONFIG & STATE ---
+        // ============================================
+        // KINETIC CLOCK WORKSHOP
+        // ============================================
+
+        const { Engine, Render, Runner, Bodies, Body, Composite, Constraint, Mouse, Events, Vector } = Matter;
+
+        // --- CONFIG ---
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        const logoImg = new Image();
         
-        let isImageReady = false;
-        logoImg.onload = () => { isImageReady = true; };
-        logoImg.src = '1000040550.png'; 
-
         let width, height, cx, cy;
+        let state = 'START';
         let isTesting = false;
-        let state = 'START'; 
-        
-        let handState = 'NONE'; // Can be 'PINCH', 'EXPAND', or 'NONE'
-        let assembleProgress = 0; 
-        let currentHandDist = 0.15;
-        let lastHandSeen = 0;
 
-        let hasSpawnedBirds = false;
-        let flashAlpha = 0; 
+        // Matter.js
+        let engine, world;
+        let clockParts = {};
+        let constraints = [];
+        let allBodies = [];
 
-        const hindiChars = ['अ','आ','इ','ई','उ','ऊ','ए','ऐ','ओ','औ','क','ख','ग','घ','च','छ','ज','झ','ट','ठ','ड','ढ','त','थ','द','ध','न','प','फ','ब','भ','म','य','र','ल','व','श','ष','स','ह'];
-        const neonColors = ['#ff2a6d', '#05d9e8', '#01ffc3', '#d1f7ff', '#9d00ff'];
-        
-        let entities = [];
-        let activeBirds = [];
+        // Hand tracking state
+        let hands = { left: null, right: null };
+        let lastHandsSeen = 0;
+        let gestureState = 'IDLE';
+        let selectedPart = null;
+        let hoveredPart = null;
+        let selectionCenter = { x: 0, y: 0 };
+        let handVelocities = { left: [], right: [] };
+        const VELOCITY_HISTORY = 5;
+
+        // For rotation tracking
+        let lastHandAngle = null;
+        let rotationAccumulator = 0;
+
+        // Clock timing
+        let clockStartTime = Date.now();
 
         function resize() {
             width = canvas.width = window.innerWidth;
@@ -158,299 +259,664 @@
         window.addEventListener('resize', resize);
         resize();
 
-        function easeInOutCubic(x) {
-            return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+        // ============================================
+        // MATTER.JS PHYSICS SETUP
+        // ============================================
+
+        function initPhysics() {
+            engine = Engine.create();
+            world = engine.world;
+            engine.gravity.y = 0.5;
+
+            createClock();
+
+            // Run physics
+            Runner.run(Runner.create(), engine);
         }
 
-        const birdSpawns = [
-            // Top Right Cluster (from original logo)
-            { rx: 0.24, ry: -0.24, angle: 1.0, speed: 2.2 }, 
-            { rx: 0.33, ry: -0.25, angle: 1.2, speed: 2.8 }, 
-            { rx: 0.40, ry: -0.38, angle: 0.8, speed: 2.4 }, 
-            // Bottom Left Cluster (from original logo)
-            { rx: -0.22, ry: 0.28, angle: -0.8, speed: 2.2 }, 
-            { rx: -0.26, ry: 0.38, angle: -1.0, speed: 2.8 },
-            { rx: -0.15, ry: 0.35, angle: -0.6, speed: 2.4 }
-        ];
+        function createClock() {
+            const clockX = cx;
+            const clockY = cy - 50;
+            const clockRadius = Math.min(width, height) * 0.25;
+            const frameThickness = 15;
+            const glassRadius = clockRadius - frameThickness;
 
-        // --- 2. ENTITIES ---
-
-        class FloatingEntity {
-            constructor(type, content, rx = 0, ry = 0, angle = 0) {
-                this.type = type; 
-                this.content = content; 
-                this.rx = rx; 
-                this.ry = ry; 
-                this.targetAngle = angle;
+            // FRAME - Circular frame (using composite of rectangles)
+            const frameSegments = 24;
+            const frameBodies = [];
+            for (let i = 0; i < frameSegments; i++) {
+                const angle = (i / frameSegments) * Math.PI * 2;
+                const nextAngle = ((i + 1) / frameSegments) * Math.PI * 2;
+                const midAngle = (angle + nextAngle) / 2;
                 
-                this.floatX = Math.random() * width;
-                this.floatY = Math.random() * height;
-                this.vx = (Math.random() - 0.5) * 1.5;
-                this.vy = (Math.random() - 0.5) * 1.5;
+                const x = clockX + Math.cos(midAngle) * (clockRadius - frameThickness / 2);
+                const y = clockY + Math.sin(midAngle) * (clockRadius - frameThickness / 2);
                 
-                this.color = neonColors[Math.floor(Math.random() * neonColors.length)];
-                this.baseSize = Math.random() * 20 + 15; 
-                this.baseAlpha = Math.random() * 0.4 + 0.2;
-                this.flapOffset = Math.random() * Math.PI * 2; 
+                const segLength = 2 * Math.PI * clockRadius / frameSegments + 5;
+                const seg = Bodies.rectangle(x, y, segLength, frameThickness, {
+                    angle: midAngle + Math.PI / 2,
+                    render: { fillStyle: '#8B4513' },
+                    label: 'frame_segment'
+                });
+                frameBodies.push(seg);
             }
+            const frame = Body.create({ parts: frameBodies, isStatic: true, label: 'frame' });
+            clockParts.frame = frame;
 
-            update(progress, imgWidth, imgHeight, isLogoLoaded, dt) {
-                const ts = dt * 60; 
-                this.floatX += this.vx * ts;
-                this.floatY += this.vy * ts;
-
-                if (this.floatX < -50) this.floatX = width + 50;
-                if (this.floatX > width + 50) this.floatX = -50;
-                if (this.floatY < -50) this.floatY = height + 50;
-                if (this.floatY > height + 50) this.floatY = -50;
-
-                let drawX = this.floatX;
-                let drawY = this.floatY;
-                let currentAlpha = this.baseAlpha;
-                let currentSize = this.baseSize;
-                let currentColor = this.color;
-
-                const easeProg = easeInOutCubic(progress);
-
-                if (this.type !== 'bg') {
-                    const targetX = cx + (this.rx * imgWidth);
-                    const targetY = cy + (this.ry * imgHeight);
-                    drawX = this.floatX + (targetX - this.floatX) * easeProg;
-                    drawY = this.floatY + (targetY - this.floatY) * easeProg;
-                    
-                    if (progress > 0.5) currentColor = '#ffffff';
-
-                    let targetSize = this.baseSize;
-                    if (this.type === 'text') targetSize = imgWidth * 0.35;
-                    if (this.type === 'diamond') targetSize = imgWidth * 0.018; 
-                    if (this.type === 'bird') targetSize = imgWidth * 0.035;
-
-                    currentSize = this.baseSize + (targetSize - this.baseSize) * easeProg;
-                    currentAlpha = this.baseAlpha + (1.0 - this.baseAlpha) * easeProg;
-
-                    // Hide completely when logo fully formed
-                    if (isLogoLoaded && progress > 0.98) currentAlpha = 0; 
-                } else {
-                    const angle = Math.atan2(this.floatY - cy, this.floatX - cx);
-                    const pushDistance = easeProg * (width * 0.5);
-                    drawX = this.floatX + Math.cos(angle) * pushDistance;
-                    drawY = this.floatY + Math.sin(angle) * pushDistance;
-                    currentAlpha = this.baseAlpha * (1 - easeProg * 1.5);
-                }
-
-                if (currentAlpha > 0) {
-                    ctx.save();
-                    ctx.globalAlpha = Math.max(0, Math.min(1, currentAlpha));
-                    ctx.fillStyle = currentColor;
-                    ctx.shadowColor = currentColor;
-                    ctx.shadowBlur = progress > 0.7 ? 15 : 5;
-
-                    if (this.type === 'bird') {
-                        ctx.translate(drawX, drawY);
-                        ctx.rotate(this.targetAngle * easeProg);
-                        const scale = currentSize / 40;
-                        ctx.scale(scale, scale);
-                        
-                        // Flapping strictly scales to 0 as it hits the final shape
-                        const flapIntensity = 16 * (1 - easeProg);
-                        const flap = Math.sin(Date.now() * 0.012 + this.flapOffset) * flapIntensity;
-                        
-                        ctx.beginPath();
-                        ctx.moveTo(0, -6);
-                        ctx.quadraticCurveTo(12, -6 + flap, 20, 8 + flap);
-                        ctx.quadraticCurveTo(8, 4, 0, 0);
-                        ctx.quadraticCurveTo(-8, 4, -20, 8 + flap);
-                        ctx.quadraticCurveTo(-12, -6 + flap, 0, -6);
-                        ctx.fill();
-
-                    } else if (this.type === 'diamond') {
-                        ctx.translate(drawX, drawY);
-                        const r = currentSize * 0.75; 
-                        ctx.beginPath();
-                        ctx.moveTo(0, -r); ctx.lineTo(r, 0); ctx.lineTo(0, r); ctx.lineTo(-r, 0);
-                        ctx.closePath();
-                        ctx.fill();
-
-                    } else {
-                        ctx.font = `bold ${currentSize}px sans-serif`;
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText(this.content, drawX, drawY);
-                    }
-                    ctx.restore();
-                }
-            }
-        }
-
-        class FlyingBird {
-            constructor(x, y, angle, speed, birdScale) {
-                this.x = x; this.y = y; 
-                this.vx = Math.sin(angle) * speed; 
-                this.vy = -Math.cos(angle) * speed; 
-                this.alpha = 1.0;
-                this.scale = birdScale; 
-                this.angle = angle; 
-                this.flapOffset = Math.random() * Math.PI * 2; 
-            }
-
-            update(dt) {
-                const ts = dt * 60;
-                this.x += this.vx * ts; this.y += this.vy * ts;
-                this.alpha -= 0.006 * ts; 
-            }
-
-            draw() {
-                if (this.alpha <= 0) return;
-                ctx.save();
-                ctx.translate(this.x, this.y);
-                ctx.rotate(this.angle);
-                ctx.scale(this.scale, this.scale);
-                ctx.globalAlpha = Math.max(0, Math.min(1, this.alpha));
-                ctx.fillStyle = '#ffffff';
-                ctx.shadowColor = '#ffffff';
-                ctx.shadowBlur = 10;
-                
-                // Escaping birds ALWAYS flap continuously
-                const flap = Math.sin(Date.now() * 0.02 + this.flapOffset) * 16; 
-                ctx.beginPath();
-                ctx.moveTo(0, -6);
-                ctx.quadraticCurveTo(12, -6 + flap, 20, 8 + flap);
-                ctx.quadraticCurveTo(8, 4, 0, 0);
-                ctx.quadraticCurveTo(-8, 4, -20, 8 + flap);
-                ctx.quadraticCurveTo(-12, -6 + flap, 0, -6);
-                ctx.fill();
-                ctx.restore();
-            }
-        }
-
-        function initScene() {
-            entities = [];
-            for (let i = 0; i < 150; i++) {
-                const char = hindiChars[Math.floor(Math.random() * hindiChars.length)];
-                entities.push(new FloatingEntity('bg', char));
-            }
-            entities.push(new FloatingEntity('text', 'उ', -0.27, 0.02));
-            entities.push(new FloatingEntity('text', 'डा', -0.01, 0.02)); // Using 'डा' (no integrated dot)
-            entities.push(new FloatingEntity('text', 'न', 0.28, 0.02));
-            entities.push(new FloatingEntity('diamond', null, -0.05, 0.28));
-            birdSpawns.forEach(spawn => {
-                entities.push(new FloatingEntity('bird', null, spawn.rx, spawn.ry, spawn.angle));
+            // GLASS - Circle
+            const glass = Bodies.circle(clockX, clockY, glassRadius - 5, {
+                isStatic: true,
+                render: { fillStyle: 'rgba(200, 230, 255, 0.15)' },
+                label: 'glass',
+                collisionFilter: { group: -1 }
             });
-        }
+            clockParts.glass = glass;
 
-        function spawnFlyingBirds(imgWidth, imgHeight) {
-            const birdScale = (imgWidth * 0.035) / 40; 
-            birdSpawns.forEach(point => {
-                const startX = cx + (imgWidth * point.rx);
-                const startY = cy + (imgHeight * point.ry);
-                activeBirds.push(new FlyingBird(startX, startY, point.angle, point.speed, birdScale));
+            // CLOCK CENTER
+            const center = Bodies.circle(clockX, clockY, 8, {
+                isStatic: true,
+                render: { fillStyle: '#333' },
+                label: 'center',
+                collisionFilter: { group: -1 }
             });
-        }
 
-        // --- 3. 120Hz LOOP ---
-        let lastTime = 0;
+            // HOUR HAND
+            const hourHandLength = clockRadius * 0.45;
+            const hourHand = Bodies.rectangle(clockX, clockY - hourHandLength / 2, 12, hourHandLength, {
+                render: { fillStyle: '#222' },
+                label: 'hourHand',
+                collisionFilter: { group: -1 }
+            });
+            clockParts.hourHand = hourHand;
 
-        function animate(timestamp) {
-            requestAnimationFrame(animate);
-            if (!lastTime) lastTime = timestamp;
-            let dt = (timestamp - lastTime) / 1000;
-            lastTime = timestamp;
-            if (dt > 0.1) dt = 0.016;
+            // MINUTE HAND
+            const minuteHandLength = clockRadius * 0.65;
+            const minuteHand = Bodies.rectangle(clockX, clockY - minuteHandLength / 2, 8, minuteHandLength, {
+                render: { fillStyle: '#444' },
+                label: 'minuteHand',
+                collisionFilter: { group: -1 }
+            });
+            clockParts.minuteHand = minuteHand;
 
-            ctx.clearRect(0, 0, width, height);
+            // PENDULUM ROD
+            const pendulumLength = clockRadius * 0.9;
+            const pendulumRod = Bodies.rectangle(clockX, clockY + clockRadius + pendulumLength / 2 + 20, 6, pendulumLength, {
+                render: { fillStyle: '#654321' },
+                label: 'pendulumRod',
+                density: 0.001
+            });
+            clockParts.pendulumRod = pendulumRod;
+
+            // PENDULUM BOB
+            const pendulumBob = Bodies.circle(clockX, clockY + clockRadius + pendulumLength + 20, 25, {
+                render: { fillStyle: '#B8860B' },
+                label: 'pendulumBob',
+                density: 0.01
+            });
+            clockParts.pendulumBob = pendulumBob;
+
+            // Add all bodies to world
+            allBodies = [frame, glass, center, hourHand, minuteHand, pendulumRod, pendulumBob];
+            Composite.add(world, allBodies);
+
+            // CONSTRAINTS
             
-            let imgWidth = Math.min(width * 0.8, 800);
-            let imgHeight = imgWidth * 0.5; 
-            if (isImageReady && logoImg.naturalWidth > 0) {
-                imgHeight = (logoImg.naturalHeight / logoImg.naturalWidth) * imgWidth;
-                const maxHeight = height * 0.6;
-                if (imgHeight > maxHeight) {
-                    imgHeight = maxHeight;
-                    imgWidth = (logoImg.naturalWidth / logoImg.naturalHeight) * imgHeight;
-                }
+            // Hour hand pivots at clock center
+            const hourConstraint = Constraint.create({
+                pointA: { x: clockX, y: clockY },
+                bodyB: hourHand,
+                pointB: { x: 0, y: hourHandLength / 2 },
+                stiffness: 1,
+                length: 0,
+                label: 'hourConstraint'
+            });
+
+            // Minute hand pivots at clock center
+            const minuteConstraint = Constraint.create({
+                pointA: { x: clockX, y: clockY },
+                bodyB: minuteHand,
+                pointB: { x: 0, y: minuteHandLength / 2 },
+                stiffness: 1,
+                length: 0,
+                label: 'minuteConstraint'
+            });
+
+            // Pendulum rod attached below clock
+            const pendulumPivot = Constraint.create({
+                pointA: { x: clockX, y: clockY + clockRadius + 10 },
+                bodyB: pendulumRod,
+                pointB: { x: 0, y: -pendulumLength / 2 },
+                stiffness: 0.9,
+                length: 0,
+                label: 'pendulumPivot'
+            });
+
+            // Pendulum bob attached to rod
+            const bobConstraint = Constraint.create({
+                bodyA: pendulumRod,
+                pointA: { x: 0, y: pendulumLength / 2 },
+                bodyB: pendulumBob,
+                pointB: { x: 0, y: 0 },
+                stiffness: 1,
+                length: 0,
+                label: 'bobConstraint'
+            });
+
+            constraints = [hourConstraint, minuteConstraint, pendulumPivot, bobConstraint];
+            Composite.add(world, constraints);
+
+            // Store original positions for clock hands
+            clockParts.hourHand.originalPos = { x: clockX, y: clockY };
+            clockParts.minuteHand.originalPos = { x: clockX, y: clockY };
+
+            // Initial pendulum swing
+            Body.setAngularVelocity(pendulumRod, 0.05);
+        }
+
+        // ============================================
+        // CLOCK TIME UPDATE
+        // ============================================
+
+        function updateClockHands() {
+            const now = new Date();
+            const hours = now.getHours() % 12;
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+
+            // Calculate angles
+            const hourAngle = ((hours + minutes / 60) / 12) * Math.PI * 2 - Math.PI / 2;
+            const minuteAngle = ((minutes + seconds / 60) / 60) * Math.PI * 2 - Math.PI / 2;
+
+            // Only update if hands are still constrained (not detached)
+            if (clockParts.hourHand && hasConstraint(clockParts.hourHand)) {
+                Body.setAngle(clockParts.hourHand, hourAngle + Math.PI / 2);
+            }
+            if (clockParts.minuteHand && hasConstraint(clockParts.minuteHand)) {
+                Body.setAngle(clockParts.minuteHand, minuteAngle + Math.PI / 2);
             }
 
-            if (state === 'RUNNING') {
-                if (!isTesting) {
-                    // Reset to NONE if camera lost for 0.5s
-                    if (Date.now() - lastHandSeen > 500) {
-                        handState = 'NONE';
-                    }
-                }
-
-                // EXACTLY 4 SECONDS PACING
-                const speed = 0.25; 
-                
-                // Smart State Logic
-                if (handState === 'PINCH') {
-                    assembleProgress += speed * dt; 
-                } else if (handState === 'EXPAND') {
-                    assembleProgress -= speed * dt;
-                } else if (handState === 'NONE') {
-                    // If not fully assembled, gracefully fall apart when let go
-                    // If 1.0 (fully assembled), it stays locked until user explicitly EXPANDS
-                    if (assembleProgress < 1.0) {
-                        assembleProgress -= speed * dt;
-                    }
-                }
-                
-                // Strict clamping
-                assembleProgress = Math.max(0, Math.min(1, assembleProgress));
-
-                // Fire spawn event exactly upon reaching 1.0
-                if (assembleProgress === 1.0 && !hasSpawnedBirds) {
-                    flashAlpha = 1.0; 
-                    spawnFlyingBirds(imgWidth, imgHeight); 
-                    hasSpawnedBirds = true;
-                } else if (assembleProgress < 0.90) {
-                    // Reset spawn lock if user expands hand significantly
-                    hasSpawnedBirds = false; 
-                }
-            }
-
-            entities.forEach(ent => ent.update(assembleProgress, imgWidth, imgHeight, isImageReady, dt));
-
-            if (assembleProgress > 0.95 && isImageReady && logoImg.naturalWidth > 0) {
-                const imgAlpha = (assembleProgress - 0.95) / 0.05;
-                
-                ctx.save();
-                ctx.globalAlpha = Math.max(0, Math.min(1, imgAlpha));
-                ctx.drawImage(logoImg, cx - imgWidth/2, cy - imgHeight/2, imgWidth, imgHeight);
-                ctx.restore();
-
-                if (flashAlpha > 0) {
-                    ctx.save();
-                    ctx.globalAlpha = flashAlpha;
-                    ctx.filter = 'brightness(1800%) drop-shadow(0 0 25px #ffffff)';
-                    ctx.drawImage(logoImg, cx - imgWidth/2, cy - imgHeight/2, imgWidth, imgHeight);
-                    ctx.restore();
-                    flashAlpha -= 1.4 * dt; 
-                }
-            }
-
-            if (flashAlpha < 0) flashAlpha = 0;
-
-            for (let i = activeBirds.length - 1; i >= 0; i--) {
-                activeBirds[i].update(dt);
-                activeBirds[i].draw();
-                if (activeBirds[i].alpha <= 0) activeBirds.splice(i, 1);
+            // Update time display
+            const timeDisplay = document.getElementById('time-display');
+            if (timeDisplay) {
+                timeDisplay.textContent = now.toLocaleTimeString();
             }
         }
 
-        // --- 4. VISION ---
-        function onHandResults(results) {
-            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                const landmarks = results.multiHandLandmarks[0];
-                const thumb = landmarks[4];
-                const index = landmarks[8];
-                currentHandDist = Math.hypot(thumb.x - index.x, thumb.y - index.y);
-                lastHandSeen = Date.now();
+        function hasConstraint(body) {
+            return constraints.some(c => c.bodyA === body || c.bodyB === body);
+        }
 
-                // Advanced Strict Tracking States
-                if (currentHandDist < 0.07) {
-                    handState = 'PINCH';
-                } else if (currentHandDist > 0.12) {
-                    handState = 'EXPAND'; // Deliberate expansion needed to break the lock
+        // ============================================
+        // RENDERING
+        // ============================================
+
+        function render() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw all physics bodies
+            const bodies = Composite.allBodies(world);
+            
+            for (const body of bodies) {
+                if (!body.parts) continue;
+                
+                const isHovered = body === hoveredPart;
+                const isSelected = body === selectedPart;
+                
+                // Draw each part of the body
+                for (const part of body.parts) {
+                    if (part === body && body.parts.length > 1) continue;
+                    
+                    ctx.beginPath();
+                    const vertices = part.vertices;
+                    ctx.moveTo(vertices[0].x, vertices[0].y);
+                    for (let j = 1; j < vertices.length; j++) {
+                        ctx.lineTo(vertices[j].x, vertices[j].y);
+                    }
+                    ctx.closePath();
+
+                    // Get fill color based on label
+                    let fillColor = getBodyColor(body.label || part.label);
+                    
+                    // Draw glow effect for hovered/selected
+                    if (isHovered || isSelected) {
+                        ctx.save();
+                        ctx.shadowColor = '#00aaff';
+                        ctx.shadowBlur = 25;
+                        ctx.strokeStyle = '#00aaff';
+                        ctx.lineWidth = 4;
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+
+                    ctx.fillStyle = fillColor;
+                    ctx.fill();
+                    
+                    // Normal stroke
+                    ctx.strokeStyle = isSelected ? '#00ffff' : 'rgba(100, 180, 255, 0.3)';
+                    ctx.lineWidth = isSelected ? 3 : 1;
+                    ctx.stroke();
+                }
+
+                // Special rendering for circular bodies (glass, bob, center)
+                if (body.label === 'glass' || body.label === 'pendulumBob' || body.label === 'center') {
+                    ctx.beginPath();
+                    ctx.arc(body.position.x, body.position.y, body.circleRadius, 0, Math.PI * 2);
+                    
+                    if (isHovered || isSelected) {
+                        ctx.save();
+                        ctx.shadowColor = '#00aaff';
+                        ctx.shadowBlur = 25;
+                        ctx.strokeStyle = '#00aaff';
+                        ctx.lineWidth = 4;
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+                    
+                    ctx.fillStyle = getBodyColor(body.label);
+                    ctx.fill();
+                    ctx.strokeStyle = isSelected ? '#00ffff' : 'rgba(100, 180, 255, 0.3)';
+                    ctx.lineWidth = isSelected ? 3 : 1;
+                    ctx.stroke();
+                }
+            }
+
+            // Draw constraints (for debugging/visual)
+            for (const constraint of constraints) {
+                if (!constraint.bodyB) continue;
+                
+                const pointA = constraint.pointA;
+                const pointB = constraint.bodyB ? 
+                    Vector.add(constraint.bodyB.position, Vector.rotate(constraint.pointB, constraint.bodyB.angle)) :
+                    constraint.pointB;
+                
+                ctx.beginPath();
+                ctx.moveTo(pointA.x, pointA.y);
+                ctx.lineTo(pointB.x, pointB.y);
+                ctx.strokeStyle = 'rgba(100, 100, 100, 0.3)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            // Draw hand indicators
+            drawHandIndicators();
+        }
+
+        function getBodyColor(label) {
+            const colors = {
+                'frame': '#8B4513',
+                'frame_segment': '#8B4513',
+                'glass': 'rgba(200, 230, 255, 0.2)',
+                'hourHand': '#222',
+                'minuteHand': '#444',
+                'pendulumRod': '#654321',
+                'pendulumBob': '#B8860B',
+                'center': '#333',
+                'broken': '#666'
+            };
+            return colors[label] || '#555';
+        }
+
+        function drawHandIndicators() {
+            // Draw selection center when in selection mode
+            if (gestureState === 'SELECTING' && hands.left && hands.right) {
+                ctx.beginPath();
+                ctx.arc(selectionCenter.x, selectionCenter.y, 15, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0, 170, 255, 0.5)';
+                ctx.fill();
+                ctx.strokeStyle = '#00aaff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            // Draw hand positions
+            if (hands.left) {
+                drawHandPoint(hands.left.x * width, hands.left.y * height, '#ff6666');
+            }
+            if (hands.right) {
+                drawHandPoint(hands.right.x * width, hands.right.y * height, '#66ff66');
+            }
+        }
+
+        function drawHandPoint(x, y, color) {
+            ctx.beginPath();
+            ctx.arc(x, y, 10, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.globalAlpha = 0.6;
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+
+        // ============================================
+        // HAND GESTURE PROCESSING
+        // ============================================
+
+        function processHandGestures() {
+            const indicator = document.getElementById('gesture-indicator');
+            
+            // Check for both hands open (selection mode)
+            const bothHandsOpen = hands.left && hands.right && 
+                isHandOpen(hands.left) && isHandOpen(hands.right);
+            
+            // Check for both hands pinched (confirm)
+            const bothHandsPinched = hands.left && hands.right &&
+                isHandPinched(hands.left) && isHandPinched(hands.right);
+            
+            // Check for single hand
+            const singleHand = (hands.left && !hands.right) || (!hands.left && hands.right);
+            const activeHand = hands.left || hands.right;
+
+            // Update selection center (midpoint between hands)
+            if (hands.left && hands.right) {
+                selectionCenter.x = ((1 - hands.left.x) + (1 - hands.right.x)) / 2 * width;
+                selectionCenter.y = (hands.left.y + hands.right.y) / 2 * height;
+            }
+
+            // State machine
+            switch (gestureState) {
+                case 'IDLE':
+                    if (bothHandsOpen) {
+                        gestureState = 'SELECTING';
+                        indicator.textContent = '🖐️ Selection Mode - Hover over parts';
+                    }
+                    break;
+
+                case 'SELECTING':
+                    if (!bothHandsOpen && !bothHandsPinched) {
+                        gestureState = 'IDLE';
+                        hoveredPart = null;
+                        indicator.textContent = '';
+                    } else if (bothHandsOpen) {
+                        // Find hovered part
+                        hoveredPart = findPartAtPoint(selectionCenter.x, selectionCenter.y);
+                        if (hoveredPart) {
+                            indicator.textContent = `🖐️ Hovering: ${getPartName(hoveredPart.label)} - Pinch both hands to confirm`;
+                        } else {
+                            indicator.textContent = '🖐️ Selection Mode - Hover over parts';
+                        }
+                    } else if (bothHandsPinched && hoveredPart) {
+                        // Confirm selection
+                        gestureState = 'CONFIRMED';
+                        selectedPart = hoveredPart;
+                        detachPart(selectedPart);
+                        indicator.textContent = `🤏 ${getPartName(selectedPart.label)} CONFIRMED - Drop one hand to manipulate`;
+                    }
+                    break;
+
+                case 'CONFIRMED':
+                    if (singleHand && selectedPart) {
+                        gestureState = 'MANIPULATING';
+                        lastHandAngle = null;
+                        indicator.textContent = `✋ Manipulating ${getPartName(selectedPart.label)} - Move to drag, circle to rotate`;
+                    } else if (!hands.left && !hands.right) {
+                        // Released
+                        gestureState = 'IDLE';
+                        selectedPart = null;
+                        indicator.textContent = '';
+                    }
+                    break;
+
+                case 'MANIPULATING':
+                    if (!activeHand) {
+                        gestureState = 'IDLE';
+                        selectedPart = null;
+                        indicator.textContent = '';
+                    } else if (selectedPart) {
+                        // Move part to hand position (mirrored)
+                        const targetX = (1 - activeHand.x) * width;
+                        const targetY = activeHand.y * height;
+                        
+                        // Soft spring-like following
+                        const dx = targetX - selectedPart.position.x;
+                        const dy = targetY - selectedPart.position.y;
+                        Body.setVelocity(selectedPart, { x: dx * 0.3, y: dy * 0.3 });
+
+                        // Rotation detection (circular motion)
+                        const currentAngle = Math.atan2(
+                            activeHand.y * height - selectedPart.position.y,
+                            (1 - activeHand.x) * width - selectedPart.position.x
+                        );
+                        
+                        if (lastHandAngle !== null) {
+                            let angleDiff = currentAngle - lastHandAngle;
+                            // Normalize angle difference
+                            while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                            while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                            
+                            Body.setAngularVelocity(selectedPart, angleDiff * 2);
+                        }
+                        lastHandAngle = currentAngle;
+
+                        // Check for break gesture (fast chop)
+                        checkBreakGesture(activeHand);
+                        
+                        indicator.textContent = `✋ Manipulating ${getPartName(selectedPart.label)}`;
+                    }
+                    break;
+            }
+        }
+
+        function isHandOpen(hand) {
+            // Check if fingers are spread (distance between thumb and pinky)
+            if (!hand.landmarks) return false;
+            const thumb = hand.landmarks[4];
+            const pinky = hand.landmarks[20];
+            const dist = Math.hypot(thumb.x - pinky.x, thumb.y - pinky.y);
+            return dist > 0.15;
+        }
+
+        function isHandPinched(hand) {
+            // Check if thumb and index are close
+            if (!hand.landmarks) return false;
+            const thumb = hand.landmarks[4];
+            const index = hand.landmarks[8];
+            const dist = Math.hypot(thumb.x - index.x, thumb.y - index.y);
+            return dist < 0.06;
+        }
+
+        function findPartAtPoint(x, y) {
+            const selectableParts = ['frame', 'glass', 'hourHand', 'minuteHand', 'pendulumRod', 'pendulumBob'];
+            
+            for (const partName of selectableParts) {
+                const part = clockParts[partName];
+                if (!part) continue;
+                
+                // Check if point is within body bounds
+                const bounds = part.bounds;
+                if (x >= bounds.min.x && x <= bounds.max.x &&
+                    y >= bounds.min.y && y <= bounds.max.y) {
+                    // More precise check using Matter.js
+                    if (Matter.Bounds.contains(part.bounds, { x, y })) {
+                        return part;
+                    }
+                }
+            }
+            return null;
+        }
+
+        function detachPart(part) {
+            // Remove constraints attached to this part
+            const toRemove = constraints.filter(c => c.bodyA === part || c.bodyB === part);
+            for (const c of toRemove) {
+                Composite.remove(world, c);
+                constraints = constraints.filter(con => con !== c);
+            }
+            
+            // Make the part dynamic (not static)
+            Body.setStatic(part, false);
+        }
+
+        function getPartName(label) {
+            const names = {
+                'frame': 'Frame',
+                'glass': 'Glass',
+                'hourHand': 'Hour Hand',
+                'minuteHand': 'Minute Hand',
+                'pendulumRod': 'Pendulum Rod',
+                'pendulumBob': 'Pendulum Bob'
+            };
+            return names[label] || label;
+        }
+
+        // Track hand velocities for break detection
+        function updateHandVelocity(handKey, hand) {
+            if (!handVelocities[handKey]) handVelocities[handKey] = [];
+            
+            const vel = handVelocities[handKey];
+            if (vel.length > 0) {
+                const last = vel[vel.length - 1];
+                vel.push({
+                    x: hand.x - last.x,
+                    y: hand.y - last.y,
+                    time: Date.now()
+                });
+            } else {
+                vel.push({ x: 0, y: 0, time: Date.now() });
+            }
+            
+            // Keep only recent velocities
+            while (vel.length > VELOCITY_HISTORY) vel.shift();
+        }
+
+        function checkBreakGesture(hand) {
+            if (!selectedPart) return;
+            
+            // Get hand velocity (based on recent positions)
+            const handKey = hands.left === hand ? 'left' : 'right';
+            const vel = handVelocities[handKey];
+            if (!vel || vel.length < 3) return;
+            
+            // Calculate average velocity magnitude
+            let avgSpeed = 0;
+            for (const v of vel) {
+                avgSpeed += Math.hypot(v.x, v.y);
+            }
+            avgSpeed /= vel.length;
+            
+            // Check for fast horizontal movement (chop)
+            const lastVel = vel[vel.length - 1];
+            const isHorizontalChop = Math.abs(lastVel.x) > Math.abs(lastVel.y) * 2;
+            const isFast = avgSpeed > 0.05;
+            
+            // Check if hand is crossing the selected object
+            const handX = (1 - hand.x) * width;
+            const handY = hand.y * height;
+            const objX = selectedPart.position.x;
+            const objY = selectedPart.position.y;
+            const nearObject = Math.hypot(handX - objX, handY - objY) < 80;
+            
+            if (isHorizontalChop && isFast && nearObject) {
+                breakPart(selectedPart);
+            }
+        }
+
+        function breakPart(part) {
+            if (!part || part.isBroken) return;
+            
+            // Mark as broken
+            part.isBroken = true;
+            
+            // Get current position and angle
+            const pos = part.position;
+            const angle = part.angle;
+            const vel = part.velocity;
+            
+            // Create two halves
+            const bounds = part.bounds;
+            const partWidth = bounds.max.x - bounds.min.x;
+            const partHeight = bounds.max.y - bounds.min.y;
+            
+            // Determine split direction (horizontal for most parts)
+            const halfWidth = partWidth / 2;
+            const offset = halfWidth / 2;
+            
+            // Remove original part
+            Composite.remove(world, part);
+            if (selectedPart === part) {
+                selectedPart = null;
+                gestureState = 'IDLE';
+            }
+            
+            // Remove from clockParts
+            for (const key in clockParts) {
+                if (clockParts[key] === part) {
+                    delete clockParts[key];
+                    break;
+                }
+            }
+            
+            // Create two new halves
+            const half1 = Bodies.rectangle(
+                pos.x - offset * Math.cos(angle),
+                pos.y - offset * Math.sin(angle),
+                halfWidth, partHeight,
+                { 
+                    angle: angle, 
+                    label: 'broken',
+                    render: { fillStyle: '#666' }
+                }
+            );
+            
+            const half2 = Bodies.rectangle(
+                pos.x + offset * Math.cos(angle),
+                pos.y + offset * Math.sin(angle),
+                halfWidth, partHeight,
+                { 
+                    angle: angle, 
+                    label: 'broken',
+                    render: { fillStyle: '#666' }
+                }
+            );
+            
+            // Apply velocities with separation force
+            Body.setVelocity(half1, { x: vel.x - 2, y: vel.y });
+            Body.setVelocity(half2, { x: vel.x + 2, y: vel.y });
+            
+            Composite.add(world, [half1, half2]);
+            
+            // Flash effect
+            document.getElementById('gesture-indicator').textContent = '💥 BROKEN!';
+            setTimeout(() => {
+                if (gestureState === 'IDLE') {
+                    document.getElementById('gesture-indicator').textContent = '';
+                }
+            }, 1000);
+        }
+
+        // ============================================
+        // MEDIAPIPE HAND TRACKING
+        // ============================================
+
+        function onHandResults(results) {
+            lastHandsSeen = Date.now();
+            
+            // Reset hands
+            hands.left = null;
+            hands.right = null;
+            
+            if (results.multiHandLandmarks && results.multiHandedness) {
+                for (let i = 0; i < results.multiHandLandmarks.length; i++) {
+                    const landmarks = results.multiHandLandmarks[i];
+                    const handedness = results.multiHandedness[i];
+                    
+                    // Get wrist position as hand center
+                    const wrist = landmarks[0];
+                    const palm = landmarks[9];
+                    
+                    const handData = {
+                        x: (wrist.x + palm.x) / 2,
+                        y: (wrist.y + palm.y) / 2,
+                        landmarks: landmarks
+                    };
+                    
+                    // MediaPipe gives labels from camera's perspective, so we flip
+                    if (handedness.label === 'Right') {
+                        hands.left = handData;
+                        updateHandVelocity('left', handData);
+                    } else {
+                        hands.right = handData;
+                        updateHandVelocity('right', handData);
+                    }
                 }
             }
         }
@@ -460,82 +926,204 @@
             const startOverlay = document.getElementById('start-overlay');
             const loadingText = document.getElementById('loading-text');
             const startBtn = document.getElementById('start-btn');
+            const timeDisplay = document.getElementById('time-display');
+            const indicator = document.getElementById('gesture-indicator');
 
             startBtn.style.display = 'none';
             loadingText.style.display = 'block';
 
             try {
+                // Request 720p for mobile compatibility
                 const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'user', frameRate: { ideal: 60 } } 
+                    video: { 
+                        facingMode: 'user',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        frameRate: { ideal: 30 }
+                    } 
                 });
                 videoElement.srcObject = stream;
-                const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-                hands.setOptions({maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.85, minTrackingConfidence: 0.85});
-                hands.onResults(onHandResults);
+                
+                const mpHands = new Hands({
+                    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+                });
+                
+                mpHands.setOptions({
+                    maxNumHands: 2,
+                    modelComplexity: 1,
+                    minDetectionConfidence: 0.7,
+                    minTrackingConfidence: 0.7
+                });
+                
+                mpHands.onResults(onHandResults);
 
                 videoElement.onloadedmetadata = () => {
                     videoElement.play();
                     let lastVTime = -1;
+                    
                     const processV = async () => {
                         if (!videoElement.paused && !videoElement.ended) {
                             if (videoElement.currentTime !== lastVTime) {
                                 lastVTime = videoElement.currentTime;
-                                await hands.send({image: videoElement});
+                                await mpHands.send({ image: videoElement });
                             }
                         }
                         requestAnimationFrame(processV);
                     };
-                    processV(); 
+                    processV();
+                    
                     startOverlay.style.display = 'none';
+                    timeDisplay.style.display = 'block';
+                    indicator.style.display = 'block';
                     state = 'RUNNING';
                 };
             } catch (err) {
-                console.error(err);
-                alert("Camera Error. Using Test Mode.");
+                console.error('Camera error:', err);
+                alert("Camera Error: " + err.message + "\nUsing Test Mode.");
                 startBtn.style.display = 'inline-block';
                 loadingText.style.display = 'none';
             }
         }
 
-        // --- 5. INTERACT ---
-        function startTestMode() { document.getElementById('start-overlay').style.display = 'none'; state = 'RUNNING'; isTesting = true; }
-        
-        let initialTDist = null;
-        
-        window.addEventListener('touchstart', (e) => {
-            if (isTesting && e.touches.length === 2) initialTDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-        });
-        window.addEventListener('touchmove', (e) => {
-            if (isTesting && e.touches.length === 2 && initialTDist !== null) {
-                const cur = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-                if (cur < initialTDist - 40) handState = 'PINCH';
-                else if (cur > initialTDist + 40) handState = 'EXPAND';
+        // ============================================
+        // TEST MODE (Mouse/Touch)
+        // ============================================
+
+        function startTestMode() {
+            document.getElementById('start-overlay').style.display = 'none';
+            document.getElementById('time-display').style.display = 'block';
+            document.getElementById('gesture-indicator').style.display = 'block';
+            state = 'RUNNING';
+            isTesting = true;
+            
+            // Simulate hands with mouse
+            let mouseDown = false;
+            let shiftDown = false;
+            
+            canvas.addEventListener('mousemove', (e) => {
+                if (!isTesting) return;
+                
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / width;
+                const y = (e.clientY - rect.top) / height;
+                
+                // Simulate right hand at mouse position
+                hands.right = {
+                    x: 1 - x, // Mirror
+                    y: y,
+                    landmarks: createFakeLandmarks(1 - x, y, mouseDown)
+                };
+                
+                // If shift is held, simulate left hand nearby
+                if (shiftDown) {
+                    hands.left = {
+                        x: 1 - x + 0.1,
+                        y: y,
+                        landmarks: createFakeLandmarks(1 - x + 0.1, y, mouseDown)
+                    };
+                } else if (gestureState !== 'MANIPULATING') {
+                    hands.left = null;
+                }
+                
+                lastHandsSeen = Date.now();
+                updateHandVelocity('right', hands.right);
+            });
+            
+            canvas.addEventListener('mousedown', (e) => {
+                mouseDown = true;
+                // Update landmarks to pinched state
+                if (hands.right) {
+                    hands.right.landmarks = createFakeLandmarks(hands.right.x, hands.right.y, true);
+                }
+                if (hands.left) {
+                    hands.left.landmarks = createFakeLandmarks(hands.left.x, hands.left.y, true);
+                }
+            });
+            
+            canvas.addEventListener('mouseup', () => {
+                mouseDown = false;
+            });
+            
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Shift') shiftDown = true;
+                if (e.key === 'b' && selectedPart) {
+                    // Break with 'b' key
+                    breakPart(selectedPart);
+                }
+            });
+            
+            window.addEventListener('keyup', (e) => {
+                if (e.key === 'Shift') shiftDown = false;
+            });
+        }
+
+        function createFakeLandmarks(x, y, pinched) {
+            // Create fake landmarks array for gesture detection
+            const landmarks = [];
+            for (let i = 0; i < 21; i++) {
+                landmarks.push({ x: x, y: y, z: 0 });
             }
-        });
-        window.addEventListener('touchend', (e) => {
-            if (e.touches.length < 2) {
-                initialTDist = null;
-                handState = 'NONE';
+            
+            // Adjust thumb (4) and index (8) based on pinch state
+            if (pinched) {
+                landmarks[4] = { x: x, y: y, z: 0 };
+                landmarks[8] = { x: x + 0.02, y: y, z: 0 };
+            } else {
+                landmarks[4] = { x: x - 0.1, y: y, z: 0 };
+                landmarks[8] = { x: x + 0.1, y: y - 0.05, z: 0 };
+                landmarks[20] = { x: x + 0.15, y: y + 0.1, z: 0 }; // Pinky spread
             }
+            
+            return landmarks;
+        }
+
+        // ============================================
+        // MAIN LOOP
+        // ============================================
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (state !== 'RUNNING') return;
+            
+            // Update clock hands
+            updateClockHands();
+            
+            // Process hand gestures
+            if (!isTesting && Date.now() - lastHandsSeen > 500) {
+                hands.left = null;
+                hands.right = null;
+                if (gestureState !== 'IDLE') {
+                    gestureState = 'IDLE';
+                    selectedPart = null;
+                    hoveredPart = null;
+                    document.getElementById('gesture-indicator').textContent = '';
+                }
+            }
+            
+            processHandGestures();
+            
+            // Render
+            render();
+        }
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+
+        document.getElementById('start-btn').addEventListener('click', () => {
+            initPhysics();
+            initCamera();
+        });
+        
+        document.getElementById('test-btn').addEventListener('click', () => {
+            initPhysics();
+            startTestMode();
         });
 
-        // Desktop testing: Left Click = Pinch, Right Click = Expand
-        window.addEventListener('mousedown', (e) => { 
-            if(isTesting) {
-                if (e.button === 0) handState = 'PINCH'; 
-                else if (e.button === 2) handState = 'EXPAND'; 
-            }
-        });
-        window.addEventListener('mouseup', () => { if(isTesting) handState = 'NONE'; });
-        window.addEventListener('contextmenu', e => { if(isTesting) e.preventDefault(); });
-        
-        document.getElementById('start-btn').addEventListener('click', initCamera);
-        document.getElementById('test-btn').addEventListener('click', startTestMode);
-        
-        initScene();
-        requestAnimationFrame(animate); 
+        // Start animation loop
+        requestAnimationFrame(animate);
     </script>
 </body>
 </html>
-
 
