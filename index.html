@@ -223,6 +223,14 @@
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         
+        // Gesture detection thresholds
+        const HAND_OPEN_THRESHOLD = 0.15;    // Min distance between thumb and pinky for open hand
+        const PINCH_THRESHOLD = 0.06;         // Max distance between thumb and index for pinch
+        const VELOCITY_THRESHOLD = 0.05;      // Min velocity magnitude for break gesture
+        const HORIZONTAL_CHOP_RATIO = 2;      // Multiplier: horizontal > vertical * ratio for chop
+        const BREAK_GESTURE_PROXIMITY = 80;   // Max distance from object for break gesture (pixels)
+        const VELOCITY_HISTORY = 5;           // Number of velocity samples to track
+        
         let width, height, cx, cy;
         let state = 'START';
         let isTesting = false;
@@ -241,7 +249,6 @@
         let hoveredPart = null;
         let selectionCenter = { x: 0, y: 0 };
         let handVelocities = { left: [], right: [] };
-        const VELOCITY_HISTORY = 5;
 
         // For rotation tracking
         let lastHandAngle = null;
@@ -258,6 +265,11 @@
         }
         window.addEventListener('resize', resize);
         resize();
+
+        // Helper: Mirror X coordinate (camera is mirrored for natural interaction)
+        function mirrorX(x) {
+            return 1 - x;
+        }
 
         // ============================================
         // MATTER.JS PHYSICS SETUP
@@ -606,9 +618,9 @@
             const singleHand = (hands.left && !hands.right) || (!hands.left && hands.right);
             const activeHand = hands.left || hands.right;
 
-            // Update selection center (midpoint between hands)
+            // Update selection center (midpoint between hands, mirrored for natural interaction)
             if (hands.left && hands.right) {
-                selectionCenter.x = ((1 - hands.left.x) + (1 - hands.right.x)) / 2 * width;
+                selectionCenter.x = (mirrorX(hands.left.x) + mirrorX(hands.right.x)) / 2 * width;
                 selectionCenter.y = (hands.left.y + hands.right.y) / 2 * height;
             }
 
@@ -662,8 +674,8 @@
                         selectedPart = null;
                         indicator.textContent = '';
                     } else if (selectedPart) {
-                        // Move part to hand position (mirrored)
-                        const targetX = (1 - activeHand.x) * width;
+                        // Move part to hand position (mirrored for natural interaction)
+                        const targetX = mirrorX(activeHand.x) * width;
                         const targetY = activeHand.y * height;
                         
                         // Soft spring-like following
@@ -674,7 +686,7 @@
                         // Rotation detection (circular motion)
                         const currentAngle = Math.atan2(
                             activeHand.y * height - selectedPart.position.y,
-                            (1 - activeHand.x) * width - selectedPart.position.x
+                            mirrorX(activeHand.x) * width - selectedPart.position.x
                         );
                         
                         if (lastHandAngle !== null) {
@@ -702,7 +714,7 @@
             const thumb = hand.landmarks[4];
             const pinky = hand.landmarks[20];
             const dist = Math.hypot(thumb.x - pinky.x, thumb.y - pinky.y);
-            return dist > 0.15;
+            return dist > HAND_OPEN_THRESHOLD;
         }
 
         function isHandPinched(hand) {
@@ -711,7 +723,7 @@
             const thumb = hand.landmarks[4];
             const index = hand.landmarks[8];
             const dist = Math.hypot(thumb.x - index.x, thumb.y - index.y);
-            return dist < 0.06;
+            return dist < PINCH_THRESHOLD;
         }
 
         function findPartAtPoint(x, y) {
@@ -795,15 +807,15 @@
             
             // Check for fast horizontal movement (chop)
             const lastVel = vel[vel.length - 1];
-            const isHorizontalChop = Math.abs(lastVel.x) > Math.abs(lastVel.y) * 2;
-            const isFast = avgSpeed > 0.05;
+            const isHorizontalChop = Math.abs(lastVel.x) > Math.abs(lastVel.y) * HORIZONTAL_CHOP_RATIO;
+            const isFast = avgSpeed > VELOCITY_THRESHOLD;
             
-            // Check if hand is crossing the selected object
-            const handX = (1 - hand.x) * width;
+            // Check if hand is crossing the selected object (mirrored coordinates)
+            const handX = mirrorX(hand.x) * width;
             const handY = hand.y * height;
             const objX = selectedPart.position.x;
             const objY = selectedPart.position.y;
-            const nearObject = Math.hypot(handX - objX, handY - objY) < 80;
+            const nearObject = Math.hypot(handX - objX, handY - objY) < BREAK_GESTURE_PROXIMITY;
             
             if (isHorizontalChop && isFast && nearObject) {
                 breakPart(selectedPart);
@@ -909,7 +921,10 @@
                         landmarks: landmarks
                     };
                     
-                    // MediaPipe gives labels from camera's perspective, so we flip
+                    // IMPORTANT: MediaPipe provides hand labels from the camera's perspective
+                    // (as if looking at the user). Since we mirror the display for natural 
+                    // interaction (like a mirror), we swap left/right so that when the user
+                    // raises their left hand, it appears on the left side of the screen.
                     if (handedness.label === 'Right') {
                         hands.left = handData;
                         updateHandVelocity('left', handData);
@@ -996,7 +1011,11 @@
             state = 'RUNNING';
             isTesting = true;
             
-            // Simulate hands with mouse
+            // Test mode simulates hand tracking with mouse/keyboard:
+            // - Mouse position = right hand position
+            // - Hold Shift = simulate both hands (for selection mode)
+            // - Click = pinch gesture
+            // - Press 'b' = break selected part
             let mouseDown = false;
             let shiftDown = false;
             
@@ -1007,21 +1026,23 @@
                 const x = (e.clientX - rect.left) / width;
                 const y = (e.clientY - rect.top) / height;
                 
-                // Simulate right hand at mouse position
+                // Simulate right hand at mouse position (pre-mirrored for display)
                 hands.right = {
-                    x: 1 - x, // Mirror
+                    x: mirrorX(x),
                     y: y,
-                    landmarks: createFakeLandmarks(1 - x, y, mouseDown)
+                    landmarks: createFakeLandmarks(mirrorX(x), y, mouseDown)
                 };
                 
-                // If shift is held, simulate left hand nearby
+                // If shift is held, simulate left hand nearby (for selection mode)
                 if (shiftDown) {
                     hands.left = {
-                        x: 1 - x + 0.1,
+                        x: mirrorX(x) + 0.1,
                         y: y,
-                        landmarks: createFakeLandmarks(1 - x + 0.1, y, mouseDown)
+                        landmarks: createFakeLandmarks(mirrorX(x) + 0.1, y, mouseDown)
                     };
                 } else if (gestureState !== 'MANIPULATING') {
+                    // Only clear left hand if not in MANIPULATING state
+                    // (MANIPULATING requires only one hand, so we keep right hand active)
                     hands.left = null;
                 }
                 
